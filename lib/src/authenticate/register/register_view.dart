@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class RegisterView extends StatelessWidget {
@@ -36,12 +39,24 @@ class FormWidget extends StatefulWidget {
 }
 
 class _FormWidgetState extends State<FormWidget> {
+  final FirebaseAuthService _auth = FirebaseAuthService();
   bool _obscureText = true;
   bool _obscureTextVerify = true;
   final _formKey = GlobalKey<FormState>();
   String password = "";
+  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
 
   @override
+
+  void dispose(){
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _emailController.dispose();
+    super.dispose();
+  }
+
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
@@ -57,6 +72,7 @@ class _FormWidgetState extends State<FormWidget> {
           ),
           const SizedBox(height: 24),
           TextFormField(
+            controller: _usernameController,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your username';
@@ -73,6 +89,7 @@ class _FormWidgetState extends State<FormWidget> {
           ),
           const SizedBox(height: 24),
           TextFormField(
+            controller: _emailController,
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your email';
@@ -89,6 +106,7 @@ class _FormWidgetState extends State<FormWidget> {
           ),
           const SizedBox(height: 18),
           TextFormField(
+            controller: _passwordController,
             onChanged: (value) {
               setState(() {
                 password = value;
@@ -167,11 +185,12 @@ class _FormWidgetState extends State<FormWidget> {
             child: ElevatedButton(
               onPressed: () {
                 if (_formKey.currentState!.validate()) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Submitting Data')),
-                  );
+                  // ScaffoldMessenger.of(context).showSnackBar(
+                  //   const SnackBar(content: Text('Submitting Data')),
+                  // );
+                  _singUp();
                 }
-              },
+              },            
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF76ABAE),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -191,5 +210,20 @@ class _FormWidgetState extends State<FormWidget> {
         ],
       ),
     );
+  }
+  void _singUp() async {
+    String username = _usernameController.text;
+    String password = _passwordController.text;
+    String email = _emailController.text;
+
+    User? user = await _auth.signUpWithEmailAndPassword(email, password);
+    print("User is successfully created");
+    Navigator.pushNamed(context, "/home");
+    // if(user != null) {
+    //   print("User is successfully created");
+    //   Navigator.pushNamed(context, "/home");
+    // } else {
+    //   print("Error");
+    // }
   }
 }

@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginView extends StatelessWidget {
@@ -37,7 +39,10 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   bool _obscureText = true;
-
+  final FirebaseAuthService _auth = FirebaseAuthService();
+  TextEditingController _usernameController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -55,12 +60,18 @@ class _LoginFormState extends State<LoginForm> {
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             labelText: 'Enter your username',
+            labelStyle: TextStyle(
+              color: Colors.white,
+            )
           ),
         ),
         const SizedBox(height: 18),
         TextFormField(
           obscureText: _obscureText,
           decoration: InputDecoration(
+             labelStyle: TextStyle(
+              color: Colors.white,
+            ),
             border: const OutlineInputBorder(),
             labelText: 'Enter your password',
             suffixIcon: IconButton(
@@ -80,7 +91,7 @@ class _LoginFormState extends State<LoginForm> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: _singIn,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF76ABAE),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -145,5 +156,20 @@ class _LoginFormState extends State<LoginForm> {
         )
       ],
     );
+  }
+  void _singIn() async {
+    String username = _usernameController.text;
+    String password = _passwordController.text;
+    String email = _emailController.text;
+
+    User? user = await _auth.signInWithEmailAndPassword(email, password);
+      print("User is successfully Log In");
+
+    // if(user != null) {
+    //   print("User is successfully created");
+    //   Navigator.pushNamed(context, "/home");
+    // } else {
+    //   print("Error");
+    // }
   }
 }
