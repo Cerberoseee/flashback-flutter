@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
+import 'package:flutter_final/src/userQuery.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginView extends StatelessWidget {
@@ -57,6 +58,7 @@ class _LoginFormState extends State<LoginForm> {
         ),
         const SizedBox(height: 24),
         TextFormField(
+          controller: _emailController,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
             labelText: 'Enter your username',
@@ -67,6 +69,7 @@ class _LoginFormState extends State<LoginForm> {
         ),
         const SizedBox(height: 18),
         TextFormField(
+          controller: _passwordController,
           obscureText: _obscureText,
           decoration: InputDecoration(
              labelStyle: TextStyle(
@@ -158,18 +161,22 @@ class _LoginFormState extends State<LoginForm> {
     );
   }
   void _singIn() async {
-    String username = _usernameController.text;
-    String password = _passwordController.text;
-    String email = _emailController.text;
-
-    User? user = await _auth.signInWithEmailAndPassword(email, password);
+    String password = _passwordController.text.trim();
+    String email = _emailController.text.trim();  
+    User? user;
+    if(isEmail(email)){     
+      user = await _auth.signInWithEmailAndPassword(email, password);
+    }else{
+      String? username = await getEmailFromUsername(email);
+      user = await _auth.signInWithEmailAndPassword(username.toString(), password);
+    }
+    if(user != null){
       print("User is successfully Log In");
-
-    // if(user != null) {
-    //   print("User is successfully created");
-    //   Navigator.pushNamed(context, "/home");
-    // } else {
-    //   print("Error");
-    // }
+    }
+    else{
+      print("Error pasword or username or email");
+    }
+   
+  
   }
 }

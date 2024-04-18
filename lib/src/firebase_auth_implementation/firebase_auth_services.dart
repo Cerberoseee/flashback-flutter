@@ -18,7 +18,7 @@ class FirebaseAuthService {
       UserCredential credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
       return credential.user;
     } catch (e) {
-      print("Error: $e");
+      print("Error SignIn: $e");
       return null;
     }
   }
