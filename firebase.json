@@ -1,1 +1,25 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"plashcard2","appId":"1:34818372698:android:230ca50b9174e0a0399463","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"plashcard2","configurations":{"android":"1:34818372698:android:230ca50b9174e0a0399463","ios":"1:34818372698:ios:87321e000b54d6bc399463","macos":"1:34818372698:ios:87321e000b54d6bc399463","web":"1:34818372698:web:00f70fa38d804196399463","windows":"1:34818372698:web:c4c862c301aeef31399463"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "plashcard2",
+          "appId": "1:34818372698:android:230ca50b9174e0a0399463",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "plashcard2",
+          "configurations": {
+            "android": "1:34818372698:android:230ca50b9174e0a0399463",
+            "ios": "1:34818372698:ios:87321e000b54d6bc399463",
+            "macos": "1:34818372698:ios:87321e000b54d6bc399463",
+            "web": "1:34818372698:web:00f70fa38d804196399463",
+            "windows": "1:34818372698:web:c4c862c301aeef31399463"
+          }
+        }
+      }
+    }
+  }
+}

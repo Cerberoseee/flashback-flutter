@@ -1,8 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 
 class RegisterView extends StatelessWidget {
   const RegisterView({super.key});
@@ -11,17 +10,7 @@ class RegisterView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "FlashBack",
-          style: GoogleFonts.robotoCondensed(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFFEEEEEE),
-          ),
-        ),
-        backgroundColor: const Color(0xFF222831),
-      ),
+      appBar: const AppBarWidget(),
       body: Container(
         padding: const EdgeInsets.all(12),
         color: const Color(0xFF222831),

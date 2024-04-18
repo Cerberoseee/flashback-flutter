@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_final/src/authenticate/forgot-password/forgot_view.dart';
-import 'package:flutter_final/src/authenticate/login/login_view.dart';
-import 'package:flutter_final/src/authenticate/register/register_view.dart';
+import 'package:flutter_final/src/screens/authenticate/forgot-password/forgot_view.dart';
+import 'package:flutter_final/src/screens/authenticate/login/login_view.dart';
+import 'package:flutter_final/src/screens/authenticate/register/register_view.dart';
+import 'package:flutter_final/src/screens/home/home_view.dart';
+import 'package:flutter_final/src/screens/vocabularies/vocabularies_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -12,12 +14,10 @@ import 'settings/settings_view.dart';
 
 /// The Widget that configures your application.
 class MyApp extends StatelessWidget {
-  const MyApp({
-    super.key,
-    required this.settingsController,
-  });
+  const MyApp({super.key, required this.settingsController, required this.logger});
 
   final SettingsController settingsController;
+  final logger;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +65,9 @@ class MyApp extends StatelessWidget {
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.
           onGenerateRoute: (RouteSettings routeSettings) {
-            print(routeSettings.name);
+            logger.i(routeSettings.name);
+            if (routeSettings.name == '/home') return PageRouteBuilder(pageBuilder: (_, __, ___) => const HomeView());
+            if (routeSettings.name == '/vocab') return PageRouteBuilder(pageBuilder: (_, __, ___) => const VocabView());
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) {

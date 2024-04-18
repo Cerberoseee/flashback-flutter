@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 
 class LoginView extends StatelessWidget {
   const LoginView({super.key});
@@ -10,17 +10,7 @@ class LoginView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "FlashBack",
-          style: GoogleFonts.robotoCondensed(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFFEEEEEE),
-          ),
-        ),
-        backgroundColor: const Color(0xFF222831),
-      ),
+      appBar: const AppBarWidget(),
       body: Container(
         padding: const EdgeInsets.all(12),
         color: const Color(0xFF222831),
@@ -58,18 +48,17 @@ class _LoginFormState extends State<LoginForm> {
         const SizedBox(height: 24),
         TextFormField(
           decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: 'Enter your username',
-            labelStyle: TextStyle(
-              color: Colors.white,
-            )
-          ),
+              border: OutlineInputBorder(),
+              labelText: 'Enter your username',
+              labelStyle: TextStyle(
+                color: Colors.white,
+              )),
         ),
         const SizedBox(height: 18),
         TextFormField(
           obscureText: _obscureText,
           decoration: InputDecoration(
-             labelStyle: TextStyle(
+            labelStyle: const TextStyle(
               color: Colors.white,
             ),
             border: const OutlineInputBorder(),
@@ -91,7 +80,7 @@ class _LoginFormState extends State<LoginForm> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _singIn,
+            onPressed: () => _singIn(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF76ABAE),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -157,13 +146,16 @@ class _LoginFormState extends State<LoginForm> {
       ],
     );
   }
-  void _singIn() async {
+
+  void _singIn(context) async {
     String username = _usernameController.text;
     String password = _passwordController.text;
     String email = _emailController.text;
 
     User? user = await _auth.signInWithEmailAndPassword(email, password);
-      print("User is successfully Log In");
+    print("User is successfully Log In");
+
+    Navigator.popAndPushNamed(context, "/home");
 
     // if(user != null) {
     //   print("User is successfully created");
