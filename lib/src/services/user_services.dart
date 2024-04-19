@@ -1,8 +1,5 @@
-import 'dart:ffi';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
 
 
 final FirebaseAuth _auth = FirebaseAuth.instance;

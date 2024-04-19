@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_final/src/firebase_auth_implementation/UserQuery.dart';
+import 'package:flutter_final/src/services/user_services.dart';
 import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:logger/logger.dart';
+
 class LoginView extends StatelessWidget {
   const LoginView({super.key});
 
@@ -40,9 +42,9 @@ class LoginForm extends StatefulWidget {
 class _LoginFormState extends State<LoginForm> {
   bool _obscureText = true;
   final FirebaseAuthService _auth = FirebaseAuthService();
-  TextEditingController _usernameController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-  TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -59,19 +61,18 @@ class _LoginFormState extends State<LoginForm> {
         TextFormField(
           controller: _emailController,
           decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: 'Enter your username',
-            labelStyle: TextStyle(
-              color: Colors.white,
-            )
-          ),
+              border: OutlineInputBorder(),
+              labelText: 'Enter your username',
+              labelStyle: TextStyle(
+                color: Colors.white,
+              )),
         ),
         const SizedBox(height: 18),
         TextFormField(
           controller: _passwordController,
           obscureText: _obscureText,
           decoration: InputDecoration(
-             labelStyle: TextStyle(
+            labelStyle: const TextStyle(
               color: Colors.white,
             ),
             border: const OutlineInputBorder(),
@@ -93,7 +94,7 @@ class _LoginFormState extends State<LoginForm> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: _singIn,
+            onPressed: () => _singIn(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF76ABAE),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -159,25 +160,23 @@ class _LoginFormState extends State<LoginForm> {
       ],
     );
   }
-  void _singIn() async {
+
+  void _singIn(context) async {
+    final logger = Logger();
     String password = _passwordController.text.trim();
-    String email = _emailController.text.trim();  
+    String email = _emailController.text.trim();
     User? user;
-    if(isEmail(email)){     
+    if (isEmail(email)) {
       user = await _auth.signInWithEmailAndPassword(email, password);
-    }else{
+    } else {
       String? username = await getEmailFromUsername(email);
-      print(username);
       user = await _auth.signInWithEmailAndPassword(username.toString(), password);
     }
-    if(user != null){
-      print("User is successfully Log In");
-      Navigator.pushNamed(context, "/home");
+    if (user != null) {
+      logger.i("User is successfully Log In");
+      Navigator.popAndPushNamed(context, "/home");
+    } else {
+      logger.e("Error pasword or username or email");
     }
-    else{
-      print("Error pasword or username or email");
-    }
-   
-  
   }
 }

@@ -1,9 +1,6 @@
-import 'dart:math';
-
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_final/src/firebase_auth_implementation/UserQuery.dart';
+import 'package:flutter_final/src/services/user_services.dart';
 import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:flutter_final/src/model/Users.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -55,8 +52,7 @@ class _FormWidgetState extends State<FormWidget> {
   TextEditingController _emailController = TextEditingController();
 
   @override
-
-  void dispose(){
+  void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
     _emailController.dispose();
@@ -196,7 +192,7 @@ class _FormWidgetState extends State<FormWidget> {
                   // );
                   _singUp();
                 }
-              },            
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF76ABAE),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -212,52 +208,46 @@ class _FormWidgetState extends State<FormWidget> {
             ),
           ),
           const SizedBox(height: 12),
-          
         ],
       ),
     );
   }
+
   void _singUp() async {
-  String username = _usernameController.text.trim();
-  String password = _passwordController.text.trim();
-  String email = _emailController.text.trim();
-  bool isUsernameExist = await isUsernameTaken(username);
-  bool isEmailExist = await isEmailTaken(email);
-  
-  if (isUsernameExist) {
-    print('Username đã tồn tại');
-    return;
-  }
-  else if (isEmailExist) {
-    print('Email đã được sử dụng');
-    return;
-  }else{
-    User? user = await _auth.signUpWithEmailAndPassword(email, password);
+    String username = _usernameController.text.trim();
+    String password = _passwordController.text.trim();
+    String email = _emailController.text.trim();
+    bool isUsernameExist = await isUsernameTaken(username);
+    bool isEmailExist = await isEmailTaken(email);
+
+    if (isUsernameExist) {
+      print('Username đã tồn tại');
+      return;
+    } else if (isEmailExist) {
+      print('Email đã được sử dụng');
+      return;
+    } else {
+      User? user = await _auth.signUpWithEmailAndPassword(email, password);
 
       if (user != null) {
         try {
           Users newUser = Users(
-            avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/plashcard2.appspot.com/o/origin.jpg?alt=media&token=d10294c0-e645-49b1-8efd-1afcd9a1b08b', 
-            email: email, 
-            language: 'Tiếng Việt', 
-            name: username, 
-            status: 'Unblock', 
-            username: username
-          );
+              avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/plashcard2.appspot.com/o/origin.jpg?alt=media&token=d10294c0-e645-49b1-8efd-1afcd9a1b08b',
+              email: email,
+              language: 'Tiếng Việt',
+              name: username,
+              status: 'Unblock',
+              username: username);
 
-          if (user.uid != null) {
-            await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
-            print("User is successfully created");
-            Navigator.pushNamed(context, "/home");
-          } else {
-            print("UID của người dùng không hợp lệ");
-          }
+          await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
+          print("User is successfully created");
+          Navigator.pushNamed(context, "/home");
         } catch (e) {
           print('$e');
-        }   
+        }
       } else {
         print("Đăng ký không thành công");
       }
-      }
+    }
   }
 }
