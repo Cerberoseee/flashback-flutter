@@ -3,7 +3,10 @@ import 'package:flutter_final/src/screens/authenticate/forgot-password/forgot_vi
 import 'package:flutter_final/src/screens/authenticate/login/login_view.dart';
 import 'package:flutter_final/src/screens/authenticate/register/register_view.dart';
 import 'package:flutter_final/src/screens/home/home_view.dart';
-import 'package:flutter_final/src/screens/vocabularies/vocabularies_screen.dart';
+import 'package:flutter_final/src/screens/vocabularies/detail_folder/detail_folder_view.dart';
+import 'package:flutter_final/src/screens/vocabularies/detail_topic/detail_topic_view.dart';
+import 'package:flutter_final/src/screens/vocabularies/detail_topic/flashcard_vocab/flashcard_vocab_view.dart';
+import 'package:flutter_final/src/screens/vocabularies/vocabularies_view.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -59,7 +62,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(),
           darkTheme: ThemeData.dark(),
           themeMode: settingsController.themeMode,
-
+          debugShowCheckedModeBanner: false,
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.
           onGenerateRoute: (RouteSettings routeSettings) {
@@ -76,6 +79,12 @@ class MyApp extends StatelessWidget {
                     return const ForgotPasswordView();
                   case RegisterView.routeName:
                     return const RegisterView();
+                  case DetailTopicView.routeName:
+                    return DetailTopicView(id: (routeSettings.arguments as Map)["id"]);
+                  case DetailFolderView.routeName:
+                    return DetailFolderView(id: (routeSettings.arguments as Map)["id"]);
+                  case FlashcardVocabView.routeName:
+                    return FlashcardVocabView(vocabList: (routeSettings.arguments as Map)["vocabList"]);
                   default:
                     return const LoginView();
                 }
