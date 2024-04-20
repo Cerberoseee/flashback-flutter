@@ -172,6 +172,7 @@ class _LoginFormState extends State<LoginForm> {
       String? username = await getEmailFromUsername(email);
       user = await _auth.signInWithEmailAndPassword(username.toString(), password);
     }
+    //logger.e(user);
     if (user != null) {
       logger.i("User is successfully Log In");
       Navigator.popAndPushNamed(context, "/home");

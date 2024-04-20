@@ -22,7 +22,7 @@ class Topic{
   Map<String, dynamic> toMap() {
     return {
       'createdBy': createdBy,
-      'createdOn': createdOn,
+      'createdOn': createdOn.toString(),
       'status': status,
       'topicName': topicName,
       'offset': offset,
@@ -30,4 +30,19 @@ class Topic{
       'vocabulary': vocabulary?.toMap(),
     };
   }
+
+  factory Topic.fromMap(Map<String, dynamic> map) {
+    return Topic(
+      createdBy: map['createdBy']['name'],
+      createdOn: map['createdOn'],
+      status: map['status'],
+      topicName: map['topicName'],
+      offset: map['offset'],
+      total: map['total'],
+      vocabulary: map['vocabulary'] != null
+          ? Vocabulary.fromMap(map['vocabulary'])
+          : null,
+    );
+  }
+
 }

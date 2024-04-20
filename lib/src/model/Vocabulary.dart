@@ -16,4 +16,12 @@ class Vocabulary{
       'vi': vi,
     };
   }
+
+  factory Vocabulary.fromMap(Map<String, dynamic> map) {
+    return Vocabulary(
+      en: map['en'],
+      status: map['status'],
+      vi: map['vi']
+    );
+  }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/services/folders_services.dart';
 import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 import 'package:flutter_final/src/widgets/bottom_navi_widget.dart';
 import 'package:flutter_final/src/widgets/vocab_list_widget.dart';
@@ -103,69 +104,73 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
       ),
     );
   }
-
-  final List<Map<String, dynamic>> _folders = const [
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-  ];
+  List<Map<String, dynamic>> _folders = [];
+  Future<void> _loadFolders() async {
+    _folders = await getAllFolder();
+    setState(() {});
+  }
+  //  final List<Map<String, dynamic>> _folders = const [
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  // ];
 
   final List<Map<String, dynamic>> _topics = const [
     {
@@ -234,6 +239,7 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
   void initState() {
     _tabController = TabController(length: 2, vsync: this);
     _pageController = PageController();
+    _loadFolders();
     super.initState();
   }
 
@@ -316,6 +322,14 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
                         description: _folders[index]["description"],
                         icon: const Icon(Icons.folder),
                         userName: _folders[index]["createdBy"]["username"],
+                        // userName: _folders[index]["createdBy"] is Map<String, dynamic>
+                        //           ? _folders[index]["createdBy"]["username"]
+                        //           : "Unknown User",
+
+                        // imgAvatar: _folders[index]["createdBy"] is Map<String, dynamic>
+                        //           ? _folders[index]["createdBy"]["avatarUrl"]
+                        //           : "Unknown IMG",
+                        imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
                         isDeletable: true,
                         deleteFunc: (ctx) => showDelFolderDialogue(buildContext),
                       );

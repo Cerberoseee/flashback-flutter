@@ -1,27 +1,39 @@
-import 'package:flutter_final/src/model/topic.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_final/src/model/Topic.dart';
+import 'package:flutter_final/src/model/Users.dart';
 
 class Folder{
   String createdBy;
   DateTime createdOn;
   String description;
   String folderName;
-  Topic? topic;
+  List<Topic> topic;
 
   Folder({
     required this.createdBy,
     required this.createdOn,
     required this.description,
     required this.folderName,
-    this.topic,
+    required this.topic,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'createdBy': createdBy,
-      'createdOn': createdOn,
+      'createdOn': createdOn.toString(),
       'description': description,
       'folderName': folderName,
-      'topic': topic?.toMap(),
+      'topic': topic,
     };
+  }
+
+  factory Folder.fromMap(Map<String, dynamic> map) {
+    return Folder(
+      createdBy: map['createdBy'],
+      createdOn: DateTime.parse(map['createdOn']), 
+      description: map['description'],
+      folderName: map['folderName'],
+      topic: List<Topic>.from(map['topics'].map((x) => Topic.fromMap(x))),
+    );
   }
 }
