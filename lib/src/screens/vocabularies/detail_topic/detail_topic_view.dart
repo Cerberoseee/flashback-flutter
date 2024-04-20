@@ -252,7 +252,7 @@ class _DetailTopicState extends State<DetailTopicView> {
         actions: [
           IconButton(
             onPressed: () {
-              showBottomModalSheet();
+               showBottomModalSheet();             
             },
             icon: const Icon(
               Icons.more_vert,
@@ -381,7 +381,9 @@ class _DetailTopicState extends State<DetailTopicView> {
                         color: Color(0xFF76ABAE),
                       ),
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(context, '/edit_topic');
+                    },
                   ),
                   const SizedBox(height: 12),
                   ListTile(
