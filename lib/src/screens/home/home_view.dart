@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/services/folders_services.dart';
 import 'package:flutter_final/src/services/user_services.dart';
 import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 import 'package:flutter_final/src/widgets/bottom_navi_widget.dart';
@@ -16,12 +17,26 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   String userName = 'Guest';
+  var logger = Logger();
 
   @override
   void initState() {
-    super.initState();
+    super.initState();  
     fetchData();
+    // _loadFolders();
   }
+
+  // Map<String, dynamic> _detailFolder = {};
+  // Future<void> _loadFolders() async {
+  //   Map<String, dynamic>? folderData = await getFolderDetail('1osAYcFkfKA9LsLH70Dm');
+  //   if (folderData != null) {
+  //     _detailFolder = folderData;
+  //     logger.e(_detailFolder);
+  //     setState(() {});
+  //   } else {
+  //     logger.e('Error loading folder data: folderData is null');
+  //   }
+  // }
 
   void fetchData() async {
     final logger = Logger();

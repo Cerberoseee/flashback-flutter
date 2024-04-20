@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/services/user_services.dart';
 import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 
 class ForgotPasswordView extends StatelessWidget {
@@ -26,6 +27,7 @@ class FormWidget extends StatefulWidget {
 }
 
 class _FormWidgetState extends State<FormWidget> {
+  final TextEditingController _forgotpassword = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -40,6 +42,7 @@ class _FormWidgetState extends State<FormWidget> {
         ),
         const SizedBox(height: 24),
         TextFormField(
+          controller: _forgotpassword,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter your email';
@@ -58,7 +61,12 @@ class _FormWidgetState extends State<FormWidget> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () {},
+            onPressed: (){
+              setState(() {
+                ForgotPassword(_forgotpassword.text);
+                _ShowDialog(context);
+              });
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF76ABAE),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -76,4 +84,21 @@ class _FormWidgetState extends State<FormWidget> {
       ],
     );
   }
+}
+
+void _ShowDialog(BuildContext ctx){
+  showDialog(context: ctx, 
+    builder: (BuildContext context){
+      return AlertDialog(
+        title: Text("Notification"),
+        content: Text("A password reset email has been sent to your email address."),
+        actions: [
+          TextButton(
+            onPressed: (){
+              Navigator.pop(context);
+            },
+             child: Text("OK"),)
+        ],
+      );
+    },);
 }

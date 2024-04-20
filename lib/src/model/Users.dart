@@ -25,4 +25,15 @@ class Users{
       'username': username,
     };
   }
+
+   factory Users.fromMap(Map<String, dynamic> map) {
+    return Users(
+      avatarUrl: map['avatarUrl'],
+      email: map['email'],
+      language: map['language'],
+      name: map['name'],
+      status: map['status'],
+      username: map['username'],
+    );
+  }
 }
