@@ -5,7 +5,8 @@ import 'package:flutter_final/src/screens/authenticate/register/register_view.da
 import 'package:flutter_final/src/screens/home/home_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_folder/detail_folder_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/detail_topic_view.dart';
-import 'package:flutter_final/src/screens/vocabularies/detail_topic/flashcard_vocab/flashcard_vocab_view.dart';
+import 'package:flutter_final/src/screens/vocabularies/detail_topic/edit_topic_collection.dart';
+import 'package:flutter_final/src/screens/vocabularies/detail_topic/flashcard_vocab_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/vocabularies_view.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -85,8 +86,10 @@ class MyApp extends StatelessWidget {
                     return DetailFolderView(id: (routeSettings.arguments as Map)["id"]);
                   case FlashcardVocabView.routeName:
                     return FlashcardVocabView(vocabList: (routeSettings.arguments as Map)["vocabList"]);
+                  case EditTopicView.routeName:
+                    return EditTopicView(id: (routeSettings.arguments as Map)["id"]);
                   default:
-                    return const LoginView();
+                    return const HomeView();
                 }
               },
             );

@@ -104,6 +104,7 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
       ),
     );
   }
+
   List<Map<String, dynamic>> _folders = [];
   Future<void> _loadFolders() async {
     _folders = await getAllFolder();
@@ -311,45 +312,65 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
                   );
                 },
                 children: <Widget>[
-                  ListView.builder(
-                    itemCount: _folders.length,
-                    itemBuilder: (context, index) {
-                      return VocabListWidget(
-                        onTap: () {
-                          Navigator.pushNamed(context, '/folder', arguments: {"id": _folders[index]["id"]});
-                        },
-                        title: _folders[index]["folderName"],
-                        description: _folders[index]["description"],
-                        icon: const Icon(Icons.folder),
-                        userName: _folders[index]["createdBy"]["username"],
-                        // userName: _folders[index]["createdBy"] is Map<String, dynamic>
-                        //           ? _folders[index]["createdBy"]["username"]
-                        //           : "Unknown User",
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    child: ListView.separated(
+                      separatorBuilder: (context, index) => const Divider(),
+                      itemCount: _folders.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: const EdgeInsets.only(
+                            top: 12,
+                            bottom: 12,
+                          ),
+                          child: VocabListWidget(
+                            onTap: () {
+                              Navigator.pushNamed(context, '/folder', arguments: {"id": _folders[index]["id"]});
+                            },
+                            title: _folders[index]["folderName"],
+                            description: _folders[index]["description"],
+                            icon: const Icon(Icons.folder),
+                            userName: _folders[index]["createdBy"]["username"],
+                            // userName: _folders[index]["createdBy"] is Map<String, dynamic>
+                            //           ? _folders[index]["createdBy"]["username"]
+                            //           : "Unknown User",
 
-                        // imgAvatar: _folders[index]["createdBy"] is Map<String, dynamic>
-                        //           ? _folders[index]["createdBy"]["avatarUrl"]
-                        //           : "Unknown IMG",
-                        imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
-                        isDeletable: true,
-                        deleteFunc: (ctx) => showDelFolderDialogue(buildContext),
-                      );
-                    },
+                            // imgAvatar: _folders[index]["createdBy"] is Map<String, dynamic>
+                            //           ? _folders[index]["createdBy"]["avatarUrl"]
+                            //           : "Unknown IMG",
+                            imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
+                            isDeletable: true,
+                            deleteFunc: (ctx) => showDelFolderDialogue(buildContext),
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                  ListView.builder(
-                    itemCount: _topics.length,
-                    itemBuilder: (context, index) {
-                      return VocabListWidget(
-                        onTap: () {
-                          Navigator.pushNamed(context, '/topic', arguments: {"id": _topics[index]["id"]});
-                        },
-                        title: _topics[index]["topicName"],
-                        description: _topics[index]["description"],
-                        icon: const Icon(Icons.book),
-                        userName: _topics[index]["createdBy"]["username"],
-                        isDeletable: true,
-                        deleteFunc: (ctx) => showDelTopicDialogue(buildContext),
-                      );
-                    },
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    child: ListView.separated(
+                      separatorBuilder: (context, index) => const Divider(),
+                      itemCount: _topics.length,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          margin: const EdgeInsets.only(
+                            top: 12,
+                            bottom: 12,
+                          ),
+                          child: VocabListWidget(
+                            onTap: () {
+                              Navigator.pushNamed(context, '/topic', arguments: {"id": _topics[index]["id"]});
+                            },
+                            title: _topics[index]["topicName"],
+                            description: _topics[index]["description"],
+                            icon: const Icon(Icons.book),
+                            userName: _topics[index]["createdBy"]["username"],
+                            isDeletable: true,
+                            deleteFunc: (ctx) => showDelTopicDialogue(buildContext),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),

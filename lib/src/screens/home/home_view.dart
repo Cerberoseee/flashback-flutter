@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_final/src/services/folders_services.dart';
 import 'package:flutter_final/src/services/user_services.dart';
 import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 import 'package:flutter_final/src/widgets/bottom_navi_widget.dart';

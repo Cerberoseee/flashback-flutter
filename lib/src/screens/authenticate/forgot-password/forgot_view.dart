@@ -61,9 +61,9 @@ class _FormWidgetState extends State<FormWidget> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: (){
+            onPressed: () {
+              forgotPassword(_forgotpassword.text);
               setState(() {
-                ForgotPassword(_forgotpassword.text);
                 _ShowDialog(context);
               });
             },
@@ -86,19 +86,22 @@ class _FormWidgetState extends State<FormWidget> {
   }
 }
 
-void _ShowDialog(BuildContext ctx){
-  showDialog(context: ctx, 
-    builder: (BuildContext context){
+void _ShowDialog(BuildContext ctx) {
+  showDialog(
+    context: ctx,
+    builder: (BuildContext context) {
       return AlertDialog(
         title: Text("Notification"),
         content: Text("A password reset email has been sent to your email address."),
         actions: [
           TextButton(
-            onPressed: (){
+            onPressed: () {
               Navigator.pop(context);
             },
-             child: Text("OK"),)
+            child: Text("OK"),
+          )
         ],
       );
-    },);
+    },
+  );
 }

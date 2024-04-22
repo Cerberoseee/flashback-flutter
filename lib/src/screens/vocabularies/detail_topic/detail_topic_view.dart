@@ -252,7 +252,7 @@ class _DetailTopicState extends State<DetailTopicView> {
         actions: [
           IconButton(
             onPressed: () {
-               showBottomModalSheet();             
+              showBottomModalSheet();
             },
             icon: const Icon(
               Icons.more_vert,
@@ -382,7 +382,11 @@ class _DetailTopicState extends State<DetailTopicView> {
                       ),
                     ),
                     onTap: () {
-                      Navigator.pushNamed(context, '/edit_topic');
+                      Navigator.pushNamed(
+                        context,
+                        '/edit-topic',
+                        arguments: {"id": _detailTopic["id"]},
+                      );
                     },
                   ),
                   const SizedBox(height: 12),
