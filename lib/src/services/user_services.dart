@@ -1,5 +1,9 @@
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path/path.dart' as Path;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_final/src/model/Users.dart';
 import 'package:logger/logger.dart';
 
 
@@ -98,3 +102,41 @@ Future<String> getAvatarUrlByUsername(String username) async {
     return "";
   }
 }
+
+Future<Map<String, dynamic>?> getCurrentUser(String email) async {
+  try {
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .get();
+
+    if (querySnapshot.docs.isEmpty) {
+      return null; 
+    }
+
+    final userDoc = querySnapshot.docs.first;
+    Map<String, dynamic> userData = userDoc.data();
+    return userData;
+  } catch (e) {
+    logger.e('Error fetching user: $e'); 
+    rethrow; 
+  }
+}
+
+Future<void> uploadImage(File imageFile) async {
+    String fileName = Path.basename(imageFile.path);
+    Reference storageReference = FirebaseStorage.instance.ref().child('avatars/$fileName');
+    UploadTask uploadTask = storageReference.putFile(imageFile);
+    await uploadTask.whenComplete(() async {
+      String url = await storageReference.getDownloadURL();
+     logger.e("Upload completed: $url");
+    });
+}
+
+Future<void> signOut() async {
+    try {
+      await _auth.signOut();
+    } catch (e) {
+      print('Error signing out: $e');
+    }
+  }
