@@ -29,11 +29,12 @@ class Users{
    factory Users.fromMap(Map<String, dynamic> map) {
     return Users(
       avatarUrl: map['avatarUrl'],
-      email: map['email'],
+      name: map['name'],     
       language: map['language'],
-      name: map['name'],
-      status: map['status'],
+      email: map['email'],
       username: map['username'],
+      status: map['status'],
     );
   }
+
 }
