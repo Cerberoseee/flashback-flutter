@@ -1,6 +1,4 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_final/src/model/Topic.dart';
-import 'package:flutter_final/src/model/Users.dart';
 
 class Folder{
   String createdBy;

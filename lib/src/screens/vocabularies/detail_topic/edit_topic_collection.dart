@@ -44,6 +44,21 @@ class _EditTopicViewState extends State<EditTopicView> {
                 foregroundColor: Colors.white,
                 icon: Icons.delete,
               ),
+              SlidableAction(
+                onPressed: (context) {
+                  setState(() {
+                    _listVocabu.insert(index + 1, {
+                      "en": "",
+                      "vi": "",
+                    });
+                  });
+
+                  _listKey.currentState?.insertItem(index + 1);
+                },
+                backgroundColor: const Color(0xFF76ABAE),
+                foregroundColor: Colors.white,
+                icon: Icons.add,
+              ),
             ],
           ),
           child: Container(
@@ -136,6 +151,15 @@ class _EditTopicViewState extends State<EditTopicView> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF76ABAE),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30.0),
+            topRight: Radius.circular(30.0),
+            bottomLeft: Radius.circular(30.0),
+            bottomRight: Radius.circular(30.0),
+          ),
+        ),
         onPressed: () {
           setState(() {
             _listVocabu.add({
@@ -143,7 +167,6 @@ class _EditTopicViewState extends State<EditTopicView> {
               "vi": "",
             });
           });
-
           _listKey.currentState?.insertItem(_listVocabu.length - 1);
           Timer(
             const Duration(milliseconds: 300),
