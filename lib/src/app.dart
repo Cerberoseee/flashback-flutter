@@ -69,7 +69,10 @@ class MyApp extends StatelessWidget {
                   primaryContainer: const Color(0xFF76ABAE),
                   onPrimaryContainer: const Color(0xFF76ABAE),
                 ),
+              
           ),
+          themeMode: ThemeMode.dark,
+          darkTheme: ThemeData.dark(),
           //themeMode: settingsController.themeMode,
           debugShowCheckedModeBanner: false,
           // Define a function to handle named routes in order to support
