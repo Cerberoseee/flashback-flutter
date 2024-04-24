@@ -5,8 +5,9 @@ import 'package:flutter_final/src/screens/authenticate/register/register_view.da
 import 'package:flutter_final/src/screens/home/home_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_folder/detail_folder_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/detail_topic_view.dart';
-import 'package:flutter_final/src/screens/vocabularies/detail_topic/edit_topic_collection.dart';
+import 'package:flutter_final/src/screens/vocabularies/detail_topic/edit_topic_collection_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/flashcard_vocab_view.dart';
+import 'package:flutter_final/src/screens/vocabularies/detail_topic/leaderboard_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/topic_test/test_setup_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/topic_test/test_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/vocabularies_view.dart';
@@ -63,17 +64,21 @@ class MyApp extends StatelessWidget {
           // preferred ThemeMode (light, dark, or system default) from the
           // SettingsController to display the correct theme.
           theme: ThemeData.dark().copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
+            colorScheme: ThemeData.dark().colorScheme.copyWith(
                   primary: const Color(0xFF76ABAE),
                   onPrimary: const Color(0xFF76ABAE),
                   primaryContainer: const Color(0xFF76ABAE),
                   onPrimaryContainer: const Color(0xFF76ABAE),
                 ),
-              
           ),
-          themeMode: ThemeMode.dark,
-          darkTheme: ThemeData.dark(),
-          //themeMode: settingsController.themeMode,
+          darkTheme: ThemeData.dark().copyWith(
+            colorScheme: ThemeData.dark().colorScheme.copyWith(
+                  primary: const Color(0xFF76ABAE),
+                  onPrimary: const Color(0xFF76ABAE),
+                  primaryContainer: const Color(0xFF76ABAE),
+                  onPrimaryContainer: const Color(0xFF76ABAE),
+                ),
+          ),
           debugShowCheckedModeBanner: false,
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.
@@ -104,7 +109,14 @@ class MyApp extends StatelessWidget {
                       vocabList: (routeSettings.arguments as Map)["vocabList"],
                       lastScore: (routeSettings.arguments as Map)["lastScore"],
                     );
-
+                  case TestView.routeName:
+                    return TestView(
+                      vocabList: (routeSettings.arguments as Map)["vocabList"],
+                      testType: (routeSettings.arguments as Map)["testType"],
+                      answerType: (routeSettings.arguments as Map)["answerType"],
+                    );
+                  case LeaderboardView.routeName:
+                    return const LeaderboardView();
                   default:
                     return const LoginView();
                 }

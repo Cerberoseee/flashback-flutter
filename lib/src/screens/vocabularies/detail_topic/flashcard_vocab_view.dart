@@ -16,8 +16,9 @@ class FlashcardVocabView extends StatefulWidget {
 class Vocabulary {
   final String en;
   final String vi;
+  String status;
 
-  Vocabulary({this.en = "", this.vi = ""});
+  Vocabulary({this.en = "", this.vi = "", this.status = ""});
 }
 
 class _FlashcardVocabState extends State<FlashcardVocabView> {
@@ -36,6 +37,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
         content: Vocabulary(
           en: item["en"],
           vi: item["vi"],
+          status: item["status"],
         ),
         likeAction: () {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -74,6 +76,17 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
                   vi: _swipeItems[index].content.vi,
                   en: _swipeItems[index].content.en,
                   isFlipped: false,
+                  isFavorite: (_swipeItems[index].content.status == "favorited"),
+                  setFavorite: () {
+                    setState(() {
+                      if (_swipeItems[index].content.status == "favorited") {
+                        _swipeItems[index].content.status = "unfavorite";
+                      } else {
+                        _swipeItems[index].content.status = "favorited";
+                      }
+                      print(_swipeItems[index].content.status);
+                    });
+                  },
                 );
               },
               onStackFinished: () {

@@ -1,5 +1,10 @@
+import 'dart:io';
+
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/enums.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class DetailTopicView extends StatefulWidget {
@@ -16,11 +21,39 @@ class _DetailTopicState extends State<DetailTopicView> {
   final _editFormKey = GlobalKey<FormState>();
   late TextEditingController _editTopicNameController, _editTopicDescController;
 
+  late FlutterTts flutterTts;
+
+  bool get isIOS => !kIsWeb && Platform.isIOS;
+  bool get isAndroid => !kIsWeb && Platform.isAndroid;
+  bool get isWindows => !kIsWeb && Platform.isWindows;
+  bool get isWeb => kIsWeb;
+
   @override
   void initState() {
     super.initState();
     _editTopicNameController = TextEditingController();
     _editTopicDescController = TextEditingController();
+    flutterTts = FlutterTts();
+    _setAwaitOptions();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    flutterTts.stop();
+  }
+
+  Future<void> _setAwaitOptions() async {
+    await flutterTts.setLanguage('en-US');
+    await flutterTts.awaitSpeakCompletion(true);
+  }
+
+  Future<void> _speak(newVoiceText) async {
+    if (newVoiceText != null) {
+      if (newVoiceText!.isNotEmpty) {
+        await flutterTts.speak(newVoiceText!);
+      }
+    }
   }
 
   final Map<String, dynamic> _detailTopic = {
@@ -39,13 +72,13 @@ class _DetailTopicState extends State<DetailTopicView> {
         "status": "unfavorite",
       },
       {
-        "en": "helo",
+        "en": "wassup",
         "vi": "chao",
         "status": "unfavorite",
       },
       {
-        "en": "helo",
-        "vi": "chao",
+        "en": "nice",
+        "vi": "ngon",
         "status": "unfavorite",
       },
     ]
@@ -334,18 +367,48 @@ class _DetailTopicState extends State<DetailTopicView> {
                     color: Color(0xFF222831),
                     borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Stack(
                     children: [
-                      Text(
-                        _detailTopic["vocabularies"][index]["en"],
-                        style: const TextStyle(fontSize: 24.0),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _detailTopic["vocabularies"][index]["en"],
+                            style: const TextStyle(fontSize: 24.0),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _detailTopic["vocabularies"][index]["vi"],
+                            style: const TextStyle(fontSize: 24.0),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _detailTopic["vocabularies"][index]["vi"],
-                        style: const TextStyle(fontSize: 24.0),
-                      ),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Row(
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                _speak(_detailTopic["vocabularies"][index]["en"]);
+                              },
+                              icon: const Icon(Icons.campaign),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  if (_detailTopic["vocabularies"][index]["status"] == "favorited") {
+                                    _detailTopic["vocabularies"][index]["status"] = "unfavorite";
+                                  } else {
+                                    _detailTopic["vocabularies"][index]["status"] = "favorited";
+                                  }
+                                });
+                              },
+                              icon: Icon(_detailTopic["vocabularies"][index]["status"] == "favorited" ? Icons.star : Icons.star_border),
+                            )
+                          ],
+                        ),
+                      )
                     ],
                   ),
                 ),
@@ -435,7 +498,17 @@ class _DetailTopicState extends State<DetailTopicView> {
                         color: Color(0xFF76ABAE),
                       ),
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        "/vocab-test",
+                        arguments: {
+                          "vocabList": _detailTopic["vocabularies"],
+                          "testType": TestType.trueFalse,
+                          "answerType": AnswerType.definition,
+                        },
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   ListTile(
@@ -456,7 +529,12 @@ class _DetailTopicState extends State<DetailTopicView> {
                         color: Color(0xFF76ABAE),
                       ),
                     ),
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        "/topic-leaderboard",
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                 ],
