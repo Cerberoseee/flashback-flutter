@@ -250,6 +250,7 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
       appBar: const AppBarWidget(),
       body: Container(
         padding: const EdgeInsets.all(12.0),
+        
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

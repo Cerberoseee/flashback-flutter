@@ -102,7 +102,7 @@ class _SettingsViewState extends State<SettingsView> {
             Text(
               "${_currentUser != null ? _currentUser['name'] ?? 'Unknown' : 'Unknown'}",
               style: TextStyle(
-                color: Colors.black,
+                color: Colors.white,
                 fontSize: 20,
               ),
             ),
@@ -111,14 +111,14 @@ class _SettingsViewState extends State<SettingsView> {
             ),
             Text(
               "Thông tin cá nhân",
-              style: TextStyle(color: Colors.black, fontSize: 16),
+              style: TextStyle(color: Colors.white, fontSize: 16),
             ),
             Container(
               alignment: Alignment.topLeft,
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10.0),
-                border: Border.all(color: Colors.black),
+                border: Border.all(color: Colors.white),
               ),
               child: Column(
                 children: [
@@ -133,12 +133,12 @@ class _SettingsViewState extends State<SettingsView> {
                           children: [
                             Text(
                               "Name of User",
-                              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             Text(
                               "${_currentUser != null ? _currentUser['name'] ?? 'Unknown' : 'Unknown'}",
                               style: TextStyle(
-                                color: Colors.black,
+                                color: Colors.white,
                                 fontSize: 16,
                               ),
                             ),
@@ -149,7 +149,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                   ),
                   Container(
-                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.black))),
+                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white))),
                   ),
                   TextButton(
                     onPressed: () {},
@@ -162,12 +162,12 @@ class _SettingsViewState extends State<SettingsView> {
                           children: [
                             Text(
                               "Email",
-                              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             Text(
                               "${_currentUser['email']}",
                               style: TextStyle(
-                                color: Colors.black,
+                                color: Colors.white,
                                 fontSize: 16,
                               ),
                             ),
@@ -178,7 +178,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                   ),
                   Container(
-                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.black))),
+                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white))),
                   ),
                   TextButton(
                     onPressed: () {},
@@ -190,12 +190,12 @@ class _SettingsViewState extends State<SettingsView> {
                           children: [
                             Text(
                               "Language",
-                              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             Text(
                               "${_currentUser['language']}",
                               style: TextStyle(
-                                color: Colors.black,
+                                color: Colors.white,
                                 fontSize: 16,
                               ),
                             ),
@@ -206,7 +206,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                   ),
                   Container(
-                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.black))),
+                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white))),
                   ),
                   TextButton(
                     onPressed: () {},
@@ -218,7 +218,7 @@ class _SettingsViewState extends State<SettingsView> {
                           children: [
                             Text(
                               "Change password",
-                              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -227,7 +227,7 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                   ),
                   Container(
-                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.black))),
+                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white))),
                   ),
                   TextButton(
                     onPressed: () {},
@@ -239,7 +239,7 @@ class _SettingsViewState extends State<SettingsView> {
                           children: [
                             Text(
                               "Lock your account",
-                              style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
