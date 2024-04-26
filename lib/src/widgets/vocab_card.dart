@@ -1,4 +1,5 @@
 import 'package:flip_card/flip_card.dart';
+import 'package:flip_card/flip_card_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
@@ -6,9 +7,11 @@ class VocabSwipeCard extends StatefulWidget {
   final String en, vi;
   final Function setFavorite;
   final bool isFlipped, isFavorite;
+  final FlipCardController controller;
 
   const VocabSwipeCard({
     super.key,
+    required this.controller,
     required this.vi,
     required this.en,
     required this.isFlipped,
@@ -20,7 +23,7 @@ class VocabSwipeCard extends StatefulWidget {
   State<StatefulWidget> createState() => _VocabSwipeCardState();
 }
 
-class _VocabSwipeCardState extends State<VocabSwipeCard> {
+class _VocabSwipeCardState extends State<VocabSwipeCard> with TickerProviderStateMixin {
   GlobalKey<FlipCardState> cardKey = GlobalKey<FlipCardState>();
 
   late FlutterTts flutterTts;
@@ -54,6 +57,7 @@ class _VocabSwipeCardState extends State<VocabSwipeCard> {
   @override
   Widget build(BuildContext context) {
     return FlipCard(
+      controller: widget.controller,
       fill: Fill.fillBack,
       speed: 200,
       side: !widget.isFlipped ? CardSide.FRONT : CardSide.BACK,

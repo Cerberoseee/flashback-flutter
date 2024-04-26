@@ -244,13 +244,73 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
     super.initState();
   }
 
+  void toggleBottomModal() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListView(
+                shrinkWrap: true,
+                children: [
+                  ListTile(
+                    leading: const Icon(
+                      Icons.folder,
+                      color: Colors.white,
+                    ),
+                    title: const Text("Add new Folder"),
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.book,
+                      color: Colors.white,
+                    ),
+                    title: const Text("Add new Topic"),
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  )
+                ],
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext buildContext) {
     return Scaffold(
-      appBar: const AppBarWidget(),
+      appBar: AppBarWidget(
+        actionList: [
+          IconButton(
+            onPressed: () {
+              toggleBottomModal();
+            },
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
       body: Container(
         padding: const EdgeInsets.all(12.0),
-        
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

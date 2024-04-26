@@ -4,6 +4,8 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/enums.dart';
+import 'package:flutter_final/src/helper/vocab_import_export.dart';
+import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -97,53 +99,10 @@ class _DetailTopicState extends State<DetailTopicView> {
         ),
         content: SizedBox(
           width: 400,
-          child: Form(
-            key: _editFormKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Topic name",
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
-                const SizedBox(height: 4),
-                TextFormField(
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter folder name';
-                    }
-                    return null;
-                  },
-                  controller: _editTopicNameController,
-                  decoration: const InputDecoration(
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    ),
-                    border: OutlineInputBorder(),
-                    hintText: 'Enter name',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  "Topic description (Optional)",
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
-                const SizedBox(height: 4),
-                TextFormField(
-                  controller: _editTopicDescController,
-                  decoration: const InputDecoration(
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    ),
-                    border: OutlineInputBorder(),
-                    hintText: 'Enter description (optional)',
-                  ),
-                  maxLines: 4,
-                  minLines: 4,
-                ),
-              ],
-            ),
+          child: AddEditWidget(
+            descriptionController: _editTopicDescController,
+            nameController: _editTopicNameController,
+            formKey: _editFormKey,
           ),
         ),
         actions: [
@@ -243,6 +202,8 @@ class _DetailTopicState extends State<DetailTopicView> {
                     onTap: () {
                       Navigator.pop(context);
                       showEditDialogue();
+                      _editTopicNameController.text = _detailTopic["topicName"] ?? "";
+                      _editTopicDescController.text = _detailTopic["description"] ?? "";
                     },
                   ),
                   ListTile(
@@ -537,6 +498,30 @@ class _DetailTopicState extends State<DetailTopicView> {
                     },
                   ),
                   const SizedBox(height: 12),
+                  ListTile(
+                    tileColor: const Color(0xFF222831),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    iconColor: Colors.white,
+                    textColor: Colors.white,
+                    leading: const Icon(
+                      Icons.abc,
+                      color: Color(0xFF76ABAE),
+                    ),
+                    title: const Text(
+                      "Export Vocabularies",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF76ABAE),
+                      ),
+                    ),
+                    onTap: () async {
+                      if (await VocabImportExport.exportVocab(_detailTopic["vocabularies"], _detailTopic["topicName"])) {
+                        print("ok");
+                      }
+                    },
+                  ),
                 ],
               ),
             ],

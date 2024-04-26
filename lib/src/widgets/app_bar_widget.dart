@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
-  const AppBarWidget({super.key});
+  const AppBarWidget({
+    super.key,
+    this.actionList = const [],
+  });
+
+  final List<Widget> actionList;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -19,6 +24,7 @@ class AppBarWidget extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       backgroundColor: const Color(0xFF222831),
+      actions: actionList,
     );
   }
 }

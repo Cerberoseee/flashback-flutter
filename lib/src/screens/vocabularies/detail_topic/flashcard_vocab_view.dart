@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flip_card/flip_card_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/widgets/vocab_card.dart';
 import 'package:logger/logger.dart';
@@ -27,10 +30,19 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
   late Logger logger;
 
+  late bool _isAuto;
   int _currCard = 1;
+  late double _flipDuration, _swipeDuration;
+
+  late FlipCardController _cardController;
+  late Timer timer;
 
   @override
   void initState() {
+    _cardController = FlipCardController();
+    _isAuto = true;
+    _flipDuration = 1;
+    _swipeDuration = 1;
     logger = Logger();
     _swipeItems = widget.vocabList.map((item) {
       return SwipeItem(
@@ -53,6 +65,18 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
         },
       );
     }).toList();
+    if (_isAuto) {
+      timer = Timer.periodic(
+        Duration(milliseconds: ((_flipDuration + _swipeDuration + 0.2) * 1000).toInt()),
+        (timer) async {
+          if (_currCard == widget.vocabList.length) timer.cancel();
+
+          await _cardController.toggleCard().then((value) => Timer(Duration(milliseconds: (_swipeDuration * 1000).toInt()), () {
+                _matchEngine!.currentItem?.like();
+              }));
+        },
+      );
+    }
     _matchEngine = MatchEngine(swipeItems: _swipeItems);
     super.initState();
   }
@@ -73,6 +97,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
               matchEngine: _matchEngine!,
               itemBuilder: (BuildContext context, int index) {
                 return VocabSwipeCard(
+                  controller: _cardController,
                   vi: _swipeItems[index].content.vi,
                   en: _swipeItems[index].content.en,
                   isFlipped: false,
@@ -84,7 +109,6 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
                       } else {
                         _swipeItems[index].content.status = "favorited";
                       }
-                      print(_swipeItems[index].content.status);
                     });
                   },
                 );
@@ -157,8 +181,42 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
                 )
               ],
             ),
-          )
+          ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFF76ABAE),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30.0),
+            topRight: Radius.circular(30.0),
+            bottomLeft: Radius.circular(30.0),
+            bottomRight: Radius.circular(30.0),
+          ),
+        ),
+        onPressed: () {
+          setState(() {
+            _isAuto = !_isAuto;
+          });
+          if (!_isAuto) {
+            timer.cancel();
+          } else {
+            timer = Timer.periodic(
+              Duration(milliseconds: ((_flipDuration + _swipeDuration + 0.2) * 1000).toInt()),
+              (timer) async {
+                if (_currCard == widget.vocabList.length) timer.cancel();
+
+                await _cardController.toggleCard().then((value) => Timer(Duration(milliseconds: (_swipeDuration * 1000).toInt()), () {
+                      _matchEngine!.currentItem?.like();
+                    }));
+              },
+            );
+          }
+        },
+        child: Icon(
+          _isAuto ? Icons.pause : Icons.play_arrow,
+          color: Colors.white,
+        ),
       ),
     );
   }

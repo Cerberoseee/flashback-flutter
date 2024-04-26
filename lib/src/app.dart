@@ -3,6 +3,7 @@ import 'package:flutter_final/src/screens/authenticate/forgot_password/forgot_vi
 import 'package:flutter_final/src/screens/authenticate/login/login_view.dart';
 import 'package:flutter_final/src/screens/authenticate/register/register_view.dart';
 import 'package:flutter_final/src/screens/home/home_view.dart';
+import 'package:flutter_final/src/screens/vocabularies/add_new_topic.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_folder/detail_folder_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/detail_topic_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/edit_topic_collection_view.dart';

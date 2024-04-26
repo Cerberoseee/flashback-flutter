@@ -17,7 +17,7 @@ class _EditTopicViewState extends State<EditTopicView> {
   final GlobalKey<AnimatedListState> _listKey = GlobalKey();
   final ScrollController _scrollController = ScrollController();
 
-  List<Map<String, dynamic>> _listVocabu = List.generate(
+  final List<Map<String, dynamic>> _listVocabu = List.generate(
     3,
     (index) => {
       "en": "Test en",

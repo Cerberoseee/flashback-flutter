@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_final/src/widgets/vocab_list_widget.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -90,53 +91,10 @@ class _DetailFolderState extends State<DetailFolderView> {
         ),
         content: SizedBox(
           width: 400,
-          child: Form(
-            key: _editFormKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  "Folder name",
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
-                const SizedBox(height: 4),
-                TextFormField(
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter folder name';
-                    }
-                    return null;
-                  },
-                  controller: _editFolderNameController,
-                  decoration: const InputDecoration(
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    ),
-                    border: OutlineInputBorder(),
-                    hintText: 'Enter name',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  "Folder description (Optional)",
-                  style: TextStyle(fontSize: 12, color: Colors.white),
-                ),
-                const SizedBox(height: 4),
-                TextFormField(
-                  controller: _editFolderDescController,
-                  decoration: const InputDecoration(
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                    ),
-                    border: OutlineInputBorder(),
-                    hintText: 'Enter description (optional)',
-                  ),
-                  maxLines: 4,
-                  minLines: 4,
-                ),
-              ],
-            ),
+          child: AddEditWidget(
+            descriptionController: _editFolderDescController,
+            nameController: _editFolderNameController,
+            formKey: _editFormKey,
           ),
         ),
         actions: [
@@ -269,6 +227,8 @@ class _DetailFolderState extends State<DetailFolderView> {
                     title: const Text("Edit"),
                     onTap: () {
                       Navigator.pop(context);
+                      _editFolderNameController.text = _detailFolder["folderName"] ?? "";
+                      _editFolderDescController.text = _detailFolder["description"] ?? "";
                       showEditDialogue();
                     },
                   ),
