@@ -18,7 +18,6 @@ class TestSetupView extends StatefulWidget {
   State<StatefulWidget> createState() => _TestSetupState();
 }
 
-
 class _TestSetupState extends State<TestSetupView> {
   bool _instantAnswer = false;
   TestType _testType = TestType.trueFalse;
@@ -179,13 +178,31 @@ class _TestSetupState extends State<TestSetupView> {
               title: const Text("Written"),
               controlAffinity: ListTileControlAffinity.trailing,
             ),
+            RadioListTile(
+              activeColor: const Color(0xFF76ABAE),
+              value: TestType.multiple,
+              groupValue: _testType,
+              onChanged: (TestType? value) {
+                setState(() {
+                  _testType = value!;
+                });
+              },
+              title: const Text("Multiple Choices"),
+              controlAffinity: ListTileControlAffinity.trailing,
+            ),
           ],
         ),
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(12),
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.popAndPushNamed(context, "/vocab-test", arguments: {
+              "vocabList": widget.vocabList,
+              "testType": _testType,
+              "answerType": _answerType,
+            });
+          },
           style: const ButtonStyle(
             padding: MaterialStatePropertyAll(EdgeInsets.all(16)),
             backgroundColor: MaterialStatePropertyAll(

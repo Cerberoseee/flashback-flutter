@@ -8,6 +8,8 @@ import 'package:collection/collection.dart';
 class AddTopicView extends StatefulWidget {
   const AddTopicView({super.key});
 
+  static const routeName = "/add-topic";
+
   @override
   State<StatefulWidget> createState() => _AddTopicState();
 }

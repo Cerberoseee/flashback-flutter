@@ -40,7 +40,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
   @override
   void initState() {
     _cardController = FlipCardController();
-    _isAuto = true;
+    _isAuto = false;
     _flipDuration = 1;
     _swipeDuration = 1;
     logger = Logger();
@@ -115,7 +115,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
               },
               onStackFinished: () {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text("Stack Finished"),
+                  content: Text("Learning Finished"),
                   duration: Duration(milliseconds: 500),
                 ));
               },

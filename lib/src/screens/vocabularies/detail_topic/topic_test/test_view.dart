@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/enums.dart';
 import 'package:flutter_final/src/widgets/test_linear_progress_bar.dart';
@@ -52,6 +53,7 @@ class _TestState extends State<TestView> {
   late List<Map<String, dynamic>> _vocabList = [];
   bool _isFinished = false;
   late FocusNode focusNode;
+  late List<String> _multipleChoiceList;
 
   late TextEditingController _answerTextField;
 
@@ -61,8 +63,65 @@ class _TestState extends State<TestView> {
     focusNode = FocusNode();
     _answerTextField = TextEditingController();
     _vocabList = List<Map<String, dynamic>>.from(widget.vocabList)..shuffle();
-    _randomTFAns = _vocabList[Random().nextInt(_vocabList.length)]['vi'];
+    _randomTFAns = (widget.answerType == AnswerType.definition) ? _vocabList[Random().nextInt(_vocabList.length)]['vi'] : _vocabList[Random().nextInt(_vocabList.length)]['en'];
+    _multipleChoiceList = shuffleAnswer();
     super.initState();
+  }
+
+  List<String> shuffleAnswer() {
+    String answer;
+
+    if (widget.answerType == AnswerType.definition) {
+      answer = _vocabList[_questionNum]['vi'];
+    } else {
+      answer = _vocabList[_questionNum]['en'];
+    }
+
+    List<String> answerList = [];
+    answerList.add(answer);
+    int loopIndex = 0;
+    while (loopIndex < _vocabList.length - 1) {
+      String tempAns = (widget.answerType == AnswerType.definition) ? _vocabList[Random().nextInt(_vocabList.length)]['vi'] : _vocabList[Random().nextInt(_vocabList.length)]['en'];
+      if (answerList.firstWhereOrNull((element) => element == tempAns) != null) continue;
+      answerList.add(tempAns);
+      loopIndex += 1;
+    }
+    answerList.shuffle();
+    return answerList;
+  }
+
+  void checkMultipleAns(String value) {
+    String answer, question;
+    if (widget.answerType == AnswerType.definition) {
+      question = _vocabList[_questionNum]['en'];
+      answer = _vocabList[_questionNum]['vi'];
+    } else {
+      question = _vocabList[_questionNum]['vi'];
+      answer = _vocabList[_questionNum]['en'];
+    }
+    if (answer.toLowerCase() == value.trim().toLowerCase()) {
+      setState(() {
+        _correctAns += 1;
+        _answerTextField.text = "";
+        _listCard.add({
+          "question": question,
+          "correctAnswer": answer,
+          "answer": answer,
+          "isCorrect": true,
+        });
+      });
+    } else {
+      setState(() {
+        _wrongAns += 1;
+        _answerTextField.text = "";
+        _listCard.add({
+          "question": question,
+          "correctAnswer": answer,
+          "answer": value,
+          "isCorrect": false,
+        });
+      });
+    }
   }
 
   void checkAnswerText(String value) {
@@ -134,6 +193,7 @@ class _TestState extends State<TestView> {
   void nextQuestion() {
     setState(() {
       _randomTFAns = (widget.answerType == AnswerType.definition) ? _vocabList[Random().nextInt(_vocabList.length)]['vi'] : _vocabList[Random().nextInt(_vocabList.length)]['en'];
+      _multipleChoiceList = shuffleAnswer();
 
       if (_questionNum == _vocabList.length - 1) {
         _isFinished = true;
@@ -358,13 +418,23 @@ class _TestState extends State<TestView> {
       bottomNavigationBar: !_isFinished
           ? Container(
               padding: const EdgeInsets.all(12),
-              child: widget.testType == TestType.trueFalse
-                  ? Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
+              child: widget.testType == TestType.multiple
+                  ? SizedBox(
+                      width: MediaQuery.of(context).size.width,
+                      height: 128,
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        itemCount: _vocabList.length < 4 ? _vocabList.length : 4,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 6,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                        itemBuilder: (context, index) {
+                          return ElevatedButton(
                             onPressed: () {
-                              checkAnswerTrueFalse(false);
+                              checkMultipleAns(_multipleChoiceList[index]);
                               nextQuestion();
                             },
                             style: ButtonStyle(
@@ -378,90 +448,122 @@ class _TestState extends State<TestView> {
                                 Color(0xFF76ABAE),
                               ),
                             ),
-                            child: const Text(
-                              "False",
-                              style: TextStyle(
+                            child: Text(
+                              _multipleChoiceList[index],
+                              style: const TextStyle(
                                 fontWeight: FontWeight.w400,
                                 color: Colors.white,
                                 fontSize: 16,
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              checkAnswerTrueFalse(true);
-                              nextQuestion();
-                            },
-                            style: ButtonStyle(
-                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4.0),
-                                ),
-                              ),
-                              padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
-                              backgroundColor: const MaterialStatePropertyAll(
-                                Color(0xFF76ABAE),
-                              ),
-                            ),
-                            child: const Text(
-                              "True",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w400,
-                                color: Colors.white,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Container(
-                      padding: const EdgeInsets.all(12),
-                      child: Stack(
-                        children: [
-                          SizedBox(
-                            width: (MediaQuery.of(context).size.width * 0.65 - 24),
-                            child: TextField(
-                              autofocus: true,
-                              focusNode: focusNode,
-                              controller: _answerTextField,
-                              decoration: const InputDecoration(
-                                hintText: "Enter answer",
-                              ),
-                              onSubmitted: (value) {
-                                checkAnswerText(value);
-                                nextQuestion();
-                              },
-                            ),
-                          ),
-                          Positioned(
-                            right: 56.0,
-                            top: 8.0,
-                            child: TextButton(
-                              onPressed: () {
-                                checkAnswerText(_answerTextField.text);
-                                nextQuestion();
-                              },
-                              child: const Text("Submit"),
-                            ),
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: 8.0,
-                            child: TextButton(
-                              onPressed: () {
-                                checkAnswerText("");
-                                nextQuestion();
-                              },
-                              child: const Text("Skip"),
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    ),
+                    )
+                  : widget.testType == TestType.trueFalse
+                      ? Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  checkAnswerTrueFalse(false);
+                                  nextQuestion();
+                                },
+                                style: ButtonStyle(
+                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                    ),
+                                  ),
+                                  padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
+                                  backgroundColor: const MaterialStatePropertyAll(
+                                    Color(0xFF76ABAE),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "False",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  checkAnswerTrueFalse(true);
+                                  nextQuestion();
+                                },
+                                style: ButtonStyle(
+                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                    ),
+                                  ),
+                                  padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
+                                  backgroundColor: const MaterialStatePropertyAll(
+                                    Color(0xFF76ABAE),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "True",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Container(
+                          padding: const EdgeInsets.all(12),
+                          child: Stack(
+                            children: [
+                              SizedBox(
+                                width: (MediaQuery.of(context).size.width * 0.65 - 24),
+                                child: TextField(
+                                  autofocus: true,
+                                  focusNode: focusNode,
+                                  controller: _answerTextField,
+                                  decoration: const InputDecoration(
+                                    hintText: "Enter answer",
+                                  ),
+                                  onSubmitted: (value) {
+                                    checkAnswerText(value);
+                                    nextQuestion();
+                                  },
+                                ),
+                              ),
+                              Positioned(
+                                right: 56.0,
+                                top: 8.0,
+                                child: TextButton(
+                                  onPressed: () {
+                                    checkAnswerText(_answerTextField.text);
+                                    nextQuestion();
+                                  },
+                                  child: const Text("Submit"),
+                                ),
+                              ),
+                              Positioned(
+                                right: 0,
+                                top: 8.0,
+                                child: TextButton(
+                                  onPressed: () {
+                                    checkAnswerText("");
+                                    nextQuestion();
+                                  },
+                                  child: const Text("Skip"),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
             )
           : const SizedBox(),
     );

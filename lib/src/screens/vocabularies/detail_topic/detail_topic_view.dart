@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_final/src/enums.dart';
 import 'package:flutter_final/src/helper/vocab_import_export.dart';
 import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -462,11 +461,10 @@ class _DetailTopicState extends State<DetailTopicView> {
                     onTap: () {
                       Navigator.pushNamed(
                         context,
-                        "/vocab-test",
+                        "/vocab-test-setup",
                         arguments: {
                           "vocabList": _detailTopic["vocabularies"],
-                          "testType": TestType.trueFalse,
-                          "answerType": AnswerType.definition,
+                          "lastScore": 0,
                         },
                       );
                     },

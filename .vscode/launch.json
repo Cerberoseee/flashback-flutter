@@ -8,7 +8,6 @@
       "name": "flutter_flashcard",
       "request": "launch",
       "type": "dart",
-      "args": ["--web-browser-flag=--disable-web-security"]
     },
     {
       "name": "flutter_flashcard (profile mode)",

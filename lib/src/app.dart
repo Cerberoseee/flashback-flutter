@@ -116,10 +116,12 @@ class MyApp extends StatelessWidget {
                       testType: (routeSettings.arguments as Map)["testType"],
                       answerType: (routeSettings.arguments as Map)["answerType"],
                     );
+                  case AddTopicView.routeName:
+                    return const AddTopicView();
                   case LeaderboardView.routeName:
                     return const LeaderboardView();
                   default:
-                    return const LoginView();
+                    return const HomeView();
                 }
               },
             );
