@@ -6,7 +6,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 class VocabSwipeCard extends StatefulWidget {
   final String en, vi;
   final Function setFavorite;
-  final bool isFlipped, isFavorite;
+  final bool isFlipped, isFavorite, isAutoReadAfterFlipped;
   final FlipCardController controller;
 
   const VocabSwipeCard({
@@ -16,6 +16,7 @@ class VocabSwipeCard extends StatefulWidget {
     required this.en,
     required this.isFlipped,
     required this.setFavorite,
+    required this.isAutoReadAfterFlipped,
     this.isFavorite = false,
   });
 
@@ -61,6 +62,11 @@ class _VocabSwipeCardState extends State<VocabSwipeCard> with TickerProviderStat
       fill: Fill.fillBack,
       speed: 200,
       side: !widget.isFlipped ? CardSide.FRONT : CardSide.BACK,
+      onFlipDone: (isFront) {
+        if (widget.isAutoReadAfterFlipped && !isFront) {
+          _speak(widget.en);
+        }
+      },
       front: Container(
         alignment: Alignment.center,
         child: AspectRatio(
@@ -110,24 +116,41 @@ class _VocabSwipeCardState extends State<VocabSwipeCard> with TickerProviderStat
       back: Container(
         alignment: Alignment.center,
         child: AspectRatio(
-          aspectRatio: 3 / 4,
-          child: Container(
-            alignment: Alignment.center,
-            color: const Color(0xFF222831),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+            aspectRatio: 3 / 4,
+            child: Stack(
               children: [
-                Text(
-                  widget.vi,
-                  style: const TextStyle(
-                    fontSize: 36,
-                    color: Colors.white,
+                Container(
+                  alignment: Alignment.center,
+                  color: const Color(0xFF222831),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.vi,
+                        style: const TextStyle(
+                          fontSize: 36,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          widget.setFavorite();
+                        },
+                        icon: Icon(widget.isFavorite ? Icons.star : Icons.star_border),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
+            )),
       ),
     );
   }

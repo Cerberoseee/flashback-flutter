@@ -504,7 +504,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                     iconColor: Colors.white,
                     textColor: Colors.white,
                     leading: const Icon(
-                      Icons.abc,
+                      Icons.share,
                       color: Color(0xFF76ABAE),
                     ),
                     title: const Text(
@@ -515,9 +515,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                       ),
                     ),
                     onTap: () async {
-                      if (await VocabImportExport.exportVocab(_detailTopic["vocabularies"], _detailTopic["topicName"])) {
-                        print("ok");
-                      }
+                      if (await VocabImportExport.exportVocab(_detailTopic["vocabularies"], _detailTopic["topicName"])) {}
                     },
                   ),
                 ],
