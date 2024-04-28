@@ -122,7 +122,7 @@ class MyApp extends StatelessWidget {
                   case LeaderboardView.routeName:
                     return const LeaderboardView();
                   default:
-                    return const HomeView();
+                    return const LoginView();
                 }
               },
             );
