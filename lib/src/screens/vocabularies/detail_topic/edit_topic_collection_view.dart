@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/helper/vocab_import_export.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
 class EditTopicView extends StatefulWidget {
@@ -20,8 +21,8 @@ class _EditTopicViewState extends State<EditTopicView> {
   final List<Map<String, dynamic>> _listVocabu = List.generate(
     3,
     (index) => {
-      "en": "Test en",
-      "vi": "test vi",
+      "en": "",
+      "vi": "",
     },
   );
 
@@ -135,8 +136,33 @@ class _EditTopicViewState extends State<EditTopicView> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 64.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
+              TextButton(
+                onPressed: () async {
+                  List<dynamic> vocabList = await VocabImportExport.importVocab();
+                  setState(() {
+                    _listVocabu.insertAll(0, vocabList.map((e) => {"en": e[0], "vi": e[1]}));
+                    _listKey.currentState!.insertAllItems(0, vocabList.length);
+                  });
+                },
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.add,
+                      color: Color(0xFF76ABAE),
+                    ),
+                    Text(
+                      "Add via csv file",
+                      style: TextStyle(
+                        color: Color(0xFF76ABAE),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               AnimatedList(
                 key: _listKey,
                 shrinkWrap: true,

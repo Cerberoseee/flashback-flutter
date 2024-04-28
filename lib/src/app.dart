@@ -115,6 +115,7 @@ class MyApp extends StatelessWidget {
                       vocabList: (routeSettings.arguments as Map)["vocabList"],
                       testType: (routeSettings.arguments as Map)["testType"],
                       answerType: (routeSettings.arguments as Map)["answerType"],
+                      instantAnswer: (routeSettings.arguments as Map)["instantAnswer"],
                     );
                   case AddTopicView.routeName:
                     return const AddTopicView();

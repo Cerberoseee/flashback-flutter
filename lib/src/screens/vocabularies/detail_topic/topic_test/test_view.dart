@@ -10,33 +10,14 @@ class TestView extends StatefulWidget {
   final List<Map<String, dynamic>> vocabList;
   final TestType testType;
   final AnswerType answerType;
+  final bool instantAnswer;
 
   static const routeName = '/vocab-test';
 
   const TestView({
     super.key,
-    this.vocabList = const [
-      {
-        "en": "test",
-        "vi": "thử",
-      },
-      {
-        "en": "test1",
-        "vi": "thử1",
-      },
-      {
-        "en": "test2",
-        "vi": "thử2",
-      },
-      {
-        "en": "test3",
-        "vi": "thử3",
-      },
-      {
-        "en": "test4",
-        "vi": "thử4",
-      },
-    ],
+    this.vocabList = const [],
+    this.instantAnswer = true,
     this.testType = TestType.written,
     this.answerType = AnswerType.word,
   });
@@ -49,9 +30,9 @@ class _TestState extends State<TestView> {
   int _questionNum = 0, _correctAns = 0, _wrongAns = 0;
   final List<Map<String, dynamic>> _listCard = [];
   late DateTime _timeStart, _timeEnd;
-  String? _randomTFAns;
+  String? _randomTFAns, _currAnswer;
   late List<Map<String, dynamic>> _vocabList = [];
-  bool _isFinished = false;
+  bool _isFinished = false, _showAnswer = false, _showNextQuestionBtn = false, _isCurrCorrect = false;
   late FocusNode focusNode;
   late List<String> _multipleChoiceList;
 
@@ -63,7 +44,7 @@ class _TestState extends State<TestView> {
     focusNode = FocusNode();
     _answerTextField = TextEditingController();
     _vocabList = List<Map<String, dynamic>>.from(widget.vocabList)..shuffle();
-    _randomTFAns = (widget.answerType == AnswerType.definition) ? _vocabList[Random().nextInt(_vocabList.length)]['vi'] : _vocabList[Random().nextInt(_vocabList.length)]['en'];
+    _randomTFAns = _vocabList[Random().nextInt(_vocabList.length)]['en'];
     _multipleChoiceList = shuffleAnswer();
     super.initState();
   }
@@ -78,12 +59,16 @@ class _TestState extends State<TestView> {
     }
 
     List<String> answerList = [];
+    List<int> addedList = [];
     answerList.add(answer);
+    addedList.add(_questionNum);
     int loopIndex = 0;
     while (loopIndex < _vocabList.length - 1) {
-      String tempAns = (widget.answerType == AnswerType.definition) ? _vocabList[Random().nextInt(_vocabList.length)]['vi'] : _vocabList[Random().nextInt(_vocabList.length)]['en'];
-      if (answerList.firstWhereOrNull((element) => element == tempAns) != null) continue;
+      int tempAnsIndex = Random().nextInt(_vocabList.length);
+      String tempAns = (widget.answerType == AnswerType.definition) ? _vocabList[tempAnsIndex]['vi'] : _vocabList[tempAnsIndex]['en'];
+      if (addedList.firstWhereOrNull((element) => element == tempAnsIndex) != null) continue;
       answerList.add(tempAns);
+      addedList.add(tempAnsIndex);
       loopIndex += 1;
     }
     answerList.shuffle();
@@ -99,6 +84,7 @@ class _TestState extends State<TestView> {
       question = _vocabList[_questionNum]['vi'];
       answer = _vocabList[_questionNum]['en'];
     }
+
     if (answer.toLowerCase() == value.trim().toLowerCase()) {
       setState(() {
         _correctAns += 1;
@@ -109,6 +95,7 @@ class _TestState extends State<TestView> {
           "answer": answer,
           "isCorrect": true,
         });
+        _isCurrCorrect = true;
       });
     } else {
       setState(() {
@@ -120,6 +107,13 @@ class _TestState extends State<TestView> {
           "answer": value,
           "isCorrect": false,
         });
+        _isCurrCorrect = false;
+      });
+    }
+    if (widget.instantAnswer) {
+      setState(() {
+        _currAnswer = answer;
+        _showAnswer = true;
       });
     }
   }
@@ -133,6 +127,7 @@ class _TestState extends State<TestView> {
       question = _vocabList[_questionNum]['vi'];
       answer = _vocabList[_questionNum]['en'];
     }
+
     if (answer.toLowerCase() == value.trim().toLowerCase()) {
       setState(() {
         _correctAns += 1;
@@ -143,6 +138,7 @@ class _TestState extends State<TestView> {
           "answer": answer,
           "isCorrect": true,
         });
+        _isCurrCorrect = false;
       });
     } else {
       setState(() {
@@ -154,20 +150,31 @@ class _TestState extends State<TestView> {
           "answer": value,
           "isCorrect": false,
         });
+        _isCurrCorrect = false;
+      });
+    }
+
+    if (widget.instantAnswer) {
+      setState(() {
+        _currAnswer = answer;
+        _showAnswer = true;
       });
     }
   }
 
   void checkAnswerTrueFalse(bool value) {
     bool result;
-    String question;
+    String question, answer;
     if (widget.answerType == AnswerType.definition) {
       question = _vocabList[_questionNum]['en'];
       result = _vocabList[_questionNum]['vi'] == _randomTFAns;
+      answer = _vocabList[_questionNum]['vi'];
     } else {
       question = _vocabList[_questionNum]['vi'];
       result = _vocabList[_questionNum]['en'] == _randomTFAns;
+      answer = _vocabList[_questionNum]['en'];
     }
+
     //XNOR Operation
     if (!(result ^ value)) {
       setState(() {
@@ -177,6 +184,7 @@ class _TestState extends State<TestView> {
           "answer": value,
           "isCorrect": true,
         });
+        _isCurrCorrect = true;
       });
     } else {
       setState(() {
@@ -186,11 +194,25 @@ class _TestState extends State<TestView> {
           "answer": value,
           "isCorrect": false,
         });
+        _isCurrCorrect = false;
+      });
+    }
+
+    if (widget.instantAnswer) {
+      setState(() {
+        _currAnswer = answer;
+        _showAnswer = true;
       });
     }
   }
 
   void nextQuestion() {
+    if (widget.instantAnswer) {
+      setState(() {
+        _showAnswer = false;
+        _showNextQuestionBtn = false;
+      });
+    }
     setState(() {
       _randomTFAns = (widget.answerType == AnswerType.definition) ? _vocabList[Random().nextInt(_vocabList.length)]['vi'] : _vocabList[Random().nextInt(_vocabList.length)]['en'];
       _multipleChoiceList = shuffleAnswer();
@@ -239,6 +261,55 @@ class _TestState extends State<TestView> {
                           color: Color(0xFF2A2A2A),
                         ),
                         widget.testType == TestType.trueFalse ? Text(_randomTFAns!) : Container(),
+                        _showAnswer
+                            ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _isCurrCorrect
+                                      ? Row(
+                                          children: [
+                                            Icon(
+                                              Icons.done,
+                                              color: Colors.green[400],
+                                            ),
+                                            const SizedBox(
+                                              width: 12,
+                                            ),
+                                            Text(
+                                              "Correct!",
+                                              style: TextStyle(
+                                                color: Colors.green[400],
+                                              ),
+                                            )
+                                          ],
+                                        )
+                                      : Row(
+                                          children: [
+                                            Icon(
+                                              Icons.done,
+                                              color: Colors.red[400],
+                                            ),
+                                            const SizedBox(
+                                              width: 12,
+                                            ),
+                                            Text(
+                                              "Incorrect!",
+                                              style: TextStyle(
+                                                color: Colors.red[400],
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                  Text(
+                                    "Correct Answer: $_currAnswer",
+                                    style: TextStyle(
+                                      color: Colors.green[400],
+                                      fontSize: 20,
+                                    ),
+                                  )
+                                ],
+                              )
+                            : Container(),
                       ],
                     ),
                   ),
@@ -415,157 +486,224 @@ class _TestState extends State<TestView> {
                 ),
               ),
             ),
-      bottomNavigationBar: !_isFinished
+      bottomNavigationBar: _showNextQuestionBtn
           ? Container(
               padding: const EdgeInsets.all(12),
-              child: widget.testType == TestType.multiple
-                  ? SizedBox(
-                      width: MediaQuery.of(context).size.width,
-                      height: 128,
-                      child: GridView.builder(
-                        shrinkWrap: true,
-                        itemCount: _vocabList.length < 4 ? _vocabList.length : 4,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 6,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
-                        itemBuilder: (context, index) {
-                          return ElevatedButton(
-                            onPressed: () {
-                              checkMultipleAns(_multipleChoiceList[index]);
-                              nextQuestion();
-                            },
-                            style: ButtonStyle(
-                              shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4.0),
-                                ),
-                              ),
-                              padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
-                              backgroundColor: const MaterialStatePropertyAll(
-                                Color(0xFF76ABAE),
-                              ),
-                            ),
-                            child: Text(
-                              _multipleChoiceList[index],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w400,
-                                color: Colors.white,
-                                fontSize: 16,
-                              ),
-                            ),
-                          );
-                        },
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width,
+                child: ElevatedButton(
+                  onPressed: () {
+                    nextQuestion();
+                  },
+                  style: ButtonStyle(
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4.0),
                       ),
-                    )
-                  : widget.testType == TestType.trueFalse
-                      ? Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  checkAnswerTrueFalse(false);
-                                  nextQuestion();
-                                },
-                                style: ButtonStyle(
-                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4.0),
-                                    ),
-                                  ),
-                                  padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
-                                  backgroundColor: const MaterialStatePropertyAll(
-                                    Color(0xFF76ABAE),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "False",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  checkAnswerTrueFalse(true);
-                                  nextQuestion();
-                                },
-                                style: ButtonStyle(
-                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4.0),
-                                    ),
-                                  ),
-                                  padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
-                                  backgroundColor: const MaterialStatePropertyAll(
-                                    Color(0xFF76ABAE),
-                                  ),
-                                ),
-                                child: const Text(
-                                  "True",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : Container(
-                          padding: const EdgeInsets.all(12),
-                          child: Stack(
-                            children: [
-                              SizedBox(
-                                width: (MediaQuery.of(context).size.width * 0.65 - 24),
-                                child: TextField(
-                                  autofocus: true,
-                                  focusNode: focusNode,
-                                  controller: _answerTextField,
-                                  decoration: const InputDecoration(
-                                    hintText: "Enter answer",
-                                  ),
-                                  onSubmitted: (value) {
-                                    checkAnswerText(value);
-                                    nextQuestion();
-                                  },
-                                ),
-                              ),
-                              Positioned(
-                                right: 56.0,
-                                top: 8.0,
-                                child: TextButton(
-                                  onPressed: () {
-                                    checkAnswerText(_answerTextField.text);
-                                    nextQuestion();
-                                  },
-                                  child: const Text("Submit"),
-                                ),
-                              ),
-                              Positioned(
-                                right: 0,
-                                top: 8.0,
-                                child: TextButton(
-                                  onPressed: () {
-                                    checkAnswerText("");
-                                    nextQuestion();
-                                  },
-                                  child: const Text("Skip"),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                    ),
+                    padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
+                    backgroundColor: const MaterialStatePropertyAll(
+                      Color(0xFF76ABAE),
+                    ),
+                  ),
+                  child: const Text(
+                    "Next question",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
             )
-          : const SizedBox(),
+          : !_isFinished
+              ? Container(
+                  padding: const EdgeInsets.all(12),
+                  child: widget.testType == TestType.multiple
+                      ? SizedBox(
+                          width: MediaQuery.of(context).size.width,
+                          height: 128,
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            itemCount: _vocabList.length < 4 ? _vocabList.length : 4,
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 6,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
+                            itemBuilder: (context, index) {
+                              return ElevatedButton(
+                                onPressed: () {
+                                  checkMultipleAns(_multipleChoiceList[index]);
+                                  if (widget.instantAnswer) {
+                                    setState(() {
+                                      _showNextQuestionBtn = true;
+                                    });
+                                  } else {
+                                    nextQuestion();
+                                  }
+                                },
+                                style: ButtonStyle(
+                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4.0),
+                                    ),
+                                  ),
+                                  padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
+                                  backgroundColor: const MaterialStatePropertyAll(
+                                    Color(0xFF76ABAE),
+                                  ),
+                                ),
+                                child: Text(
+                                  _multipleChoiceList[index],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : widget.testType == TestType.trueFalse
+                          ? Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      checkAnswerTrueFalse(false);
+                                      if (widget.instantAnswer) {
+                                        setState(() {
+                                          _showNextQuestionBtn = true;
+                                        });
+                                      } else {
+                                        nextQuestion();
+                                      }
+                                    },
+                                    style: ButtonStyle(
+                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(4.0),
+                                        ),
+                                      ),
+                                      padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
+                                      backgroundColor: const MaterialStatePropertyAll(
+                                        Color(0xFF76ABAE),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "False",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      checkAnswerTrueFalse(true);
+                                      if (widget.instantAnswer) {
+                                        setState(() {
+                                          _showNextQuestionBtn = true;
+                                        });
+                                      } else {
+                                        nextQuestion();
+                                      }
+                                    },
+                                    style: ButtonStyle(
+                                      shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                                        RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(4.0),
+                                        ),
+                                      ),
+                                      padding: const MaterialStatePropertyAll(EdgeInsets.all(16)),
+                                      backgroundColor: const MaterialStatePropertyAll(
+                                        Color(0xFF76ABAE),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      "True",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Container(
+                              padding: const EdgeInsets.all(12),
+                              child: Stack(
+                                children: [
+                                  SizedBox(
+                                    width: (MediaQuery.of(context).size.width * 0.65 - 24),
+                                    child: TextField(
+                                      autofocus: true,
+                                      focusNode: focusNode,
+                                      controller: _answerTextField,
+                                      decoration: const InputDecoration(
+                                        hintText: "Enter answer",
+                                      ),
+                                      onSubmitted: (value) {
+                                        checkAnswerText(value);
+                                        if (widget.instantAnswer) {
+                                          setState(() {
+                                            _showNextQuestionBtn = true;
+                                          });
+                                        } else {
+                                          nextQuestion();
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 56.0,
+                                    top: 8.0,
+                                    child: TextButton(
+                                      onPressed: () {
+                                        checkAnswerText(_answerTextField.text);
+                                        if (widget.instantAnswer) {
+                                          setState(() {
+                                            _showNextQuestionBtn = true;
+                                          });
+                                        } else {
+                                          nextQuestion();
+                                        }
+                                      },
+                                      child: const Text("Submit"),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 0,
+                                    top: 8.0,
+                                    child: TextButton(
+                                      onPressed: () {
+                                        checkAnswerText("");
+                                        if (widget.instantAnswer) {
+                                          setState(() {
+                                            _showNextQuestionBtn = true;
+                                          });
+                                        } else {
+                                          nextQuestion();
+                                        }
+                                      },
+                                      child: const Text("Skip"),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                )
+              : const SizedBox(),
     );
   }
 }

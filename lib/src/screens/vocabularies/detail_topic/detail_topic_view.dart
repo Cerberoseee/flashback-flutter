@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/enums.dart';
 import 'package:flutter_final/src/helper/vocab_import_export.dart';
 import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -20,6 +21,7 @@ class DetailTopicView extends StatefulWidget {
 
 class _DetailTopicState extends State<DetailTopicView> {
   final _editFormKey = GlobalKey<FormState>();
+  late List<Map<String, dynamic>>? _vocabList;
   late TextEditingController _editTopicNameController, _editTopicDescController;
 
   late FlutterTts flutterTts;
@@ -35,7 +37,12 @@ class _DetailTopicState extends State<DetailTopicView> {
     _editTopicNameController = TextEditingController();
     _editTopicDescController = TextEditingController();
     flutterTts = FlutterTts();
+    fetchDetailTopic();
     _setAwaitOptions();
+  }
+
+  void fetchDetailTopic() {
+    _vocabList = _detailTopic["vocabularies"];
   }
 
   @override
@@ -74,13 +81,28 @@ class _DetailTopicState extends State<DetailTopicView> {
       },
       {
         "en": "wassup",
-        "vi": "chao",
-        "status": "unfavorite",
+        "vi": "khoe ko",
+        "status": "favorited",
       },
       {
         "en": "nice",
         "vi": "ngon",
         "status": "unfavorite",
+      },
+      {
+        "en": "fine",
+        "vi": "chac la on",
+        "status": "mastered",
+      },
+      {
+        "en": "vip",
+        "vi": "pro",
+        "status": "favorited",
+      },
+      {
+        "en": "ayo",
+        "vi": "e",
+        "status": "mastered",
       },
     ]
   };
@@ -312,13 +334,51 @@ class _DetailTopicState extends State<DetailTopicView> {
                 ],
               ),
               const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  PopupMenuButton(
+                    child: const Icon(
+                      Icons.filter_list_rounded,
+                      color: Colors.white,
+                    ),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        onTap: () {
+                          setState(() {
+                            _vocabList = _detailTopic["vocabularies"];
+                          });
+                        },
+                        child: const Text("Show all"),
+                      ),
+                      PopupMenuItem(
+                        onTap: () {
+                          setState(() {
+                            _vocabList = (_detailTopic["vocabularies"] as List<Map<String, dynamic>>).where((element) => element["status"] == VocabStatus.favorited.name).toList();
+                          });
+                        },
+                        child: const Text("Show starred only"),
+                      ),
+                      PopupMenuItem(
+                        onTap: () {
+                          setState(() {
+                            _vocabList = (_detailTopic["vocabularies"] as List<Map<String, dynamic>>).where((element) => element["status"] == VocabStatus.mastered.name).toList();
+                          });
+                        },
+                        child: const Text("Show mastered only"),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               CarouselSlider.builder(
                 options: CarouselOptions(
                   enlargeCenterPage: true,
                   enableInfiniteScroll: false,
                   height: MediaQuery.of(context).size.height / 2.5,
                 ),
-                itemCount: _detailTopic["vocabularies"].length,
+                itemCount: _vocabList?.length,
                 itemBuilder: (context, index, pageIndex) => Container(
                   width: MediaQuery.of(context).size.width,
                   margin: const EdgeInsets.symmetric(horizontal: 1),
@@ -333,12 +393,12 @@ class _DetailTopicState extends State<DetailTopicView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _detailTopic["vocabularies"][index]["en"],
+                            _vocabList?[index]["en"],
                             style: const TextStyle(fontSize: 24.0),
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            _detailTopic["vocabularies"][index]["vi"],
+                            _vocabList?[index]["vi"],
                             style: const TextStyle(fontSize: 24.0),
                           ),
                         ],
@@ -350,21 +410,21 @@ class _DetailTopicState extends State<DetailTopicView> {
                           children: [
                             IconButton(
                               onPressed: () {
-                                _speak(_detailTopic["vocabularies"][index]["en"]);
+                                _speak(_vocabList?[index]["en"]);
                               },
                               icon: const Icon(Icons.campaign),
                             ),
                             IconButton(
                               onPressed: () {
                                 setState(() {
-                                  if (_detailTopic["vocabularies"][index]["status"] == "favorited") {
-                                    _detailTopic["vocabularies"][index]["status"] = "unfavorite";
+                                  if (_vocabList?[index]["status"] == VocabStatus.favorited.name) {
+                                    _vocabList?[index]["status"] = VocabStatus.unfavorite.name;
                                   } else {
-                                    _detailTopic["vocabularies"][index]["status"] = "favorited";
+                                    _vocabList?[index]["status"] = VocabStatus.favorited.name;
                                   }
                                 });
                               },
-                              icon: Icon(_detailTopic["vocabularies"][index]["status"] == "favorited" ? Icons.star : Icons.star_border),
+                              icon: Icon(_vocabList?[index]["status"] == VocabStatus.favorited.name ? Icons.star : Icons.star_border),
                             )
                           ],
                         ),
@@ -375,7 +435,7 @@ class _DetailTopicState extends State<DetailTopicView> {
               ),
               const SizedBox(height: 24),
               Text(
-                "${_detailTopic["vocabularies"] != null ? _detailTopic["vocabularies"].length : 0} flashcard${(_detailTopic["vocabularies"].length > 1 || _detailTopic["vocabularies"].length != null) ? "s" : ""}",
+                "${_vocabList != null ? _vocabList?.length : 0} flashcard${(_vocabList!.length > 1) ? "s" : ""}",
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
