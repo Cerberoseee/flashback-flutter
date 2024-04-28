@@ -36,14 +36,14 @@ class _AddEditState extends State<AddEditWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
-            "Topic name",
+            "Name",
             style: TextStyle(fontSize: 12, color: Colors.white),
           ),
           const SizedBox(height: 4),
           TextFormField(
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter folder name';
+                return 'Please enter a name';
               }
               return null;
             },
@@ -58,7 +58,7 @@ class _AddEditState extends State<AddEditWidget> {
           ),
           const SizedBox(height: 12),
           const Text(
-            "Topic description (Optional)",
+            "Description (Optional)",
             style: TextStyle(fontSize: 12, color: Colors.white),
           ),
           const SizedBox(height: 4),

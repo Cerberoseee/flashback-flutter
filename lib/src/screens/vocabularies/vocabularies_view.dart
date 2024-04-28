@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/folders_services.dart';
+import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 import 'package:flutter_final/src/widgets/bottom_navi_widget.dart';
 import 'package:flutter_final/src/widgets/vocab_list_widget.dart';
@@ -16,6 +17,8 @@ class VocabView extends StatefulWidget {
 class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
   late TabController _tabController;
   late PageController _pageController;
+  late TextEditingController _addFolderNameController, _addFolderDescController;
+  final GlobalKey<FormState> _addFormKey = GlobalKey();
 
   Future<void> showDelTopicDialogue(context) async {
     await showDialog(
@@ -240,8 +243,62 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
   void initState() {
     _tabController = TabController(length: 2, vsync: this);
     _pageController = PageController();
+    _addFolderNameController = TextEditingController();
+    _addFolderDescController = TextEditingController();
+
     _loadFolders();
     super.initState();
+  }
+
+  void showAddDialogue() async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          "Add Folder",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        content: SizedBox(
+          width: 400,
+          child: AddEditWidget(
+            descriptionController: _addFolderDescController,
+            nameController: _addFolderNameController,
+            formKey: _addFormKey,
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text(
+              "Cancel",
+              style: TextStyle(
+                color: Color(0xFF76ABAE),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          TextButton(
+            child: const Text(
+              "Confirm",
+              style: TextStyle(
+                color: Color(0xFF76ABAE),
+              ),
+            ),
+            onPressed: () {
+              if (_addFormKey.currentState!.validate()) {
+                //edit api service goes here
+                Navigator.pop(context);
+                // _editFormKey.currentState.save();
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   void toggleBottomModal() {
@@ -264,6 +321,7 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
                     title: const Text("Add new Folder"),
                     onTap: () {
                       Navigator.pop(context);
+                      showAddDialogue();
                     },
                   ),
                   ListTile(
@@ -274,6 +332,7 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
                     title: const Text("Add new Topic"),
                     onTap: () {
                       Navigator.pop(context);
+                      Navigator.pushNamed(context, "/add-topic");
                     },
                   )
                 ],
