@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_final/src/screens/authenticate/forgot_password/forgot_view.dart';
 import 'package:flutter_final/src/screens/authenticate/login/login_view.dart';
 import 'package:flutter_final/src/screens/authenticate/register/register_view.dart';
+import 'package:flutter_final/src/screens/communities/communities_search_view.dart';
+import 'package:flutter_final/src/screens/communities/communities_view.dart';
 import 'package:flutter_final/src/screens/home/home_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/add_new_topic.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_folder/detail_folder_view.dart';
@@ -87,6 +89,7 @@ class MyApp extends StatelessWidget {
             logger.i(routeSettings.name);
             if (routeSettings.name == '/home') return PageRouteBuilder(pageBuilder: (_, __, ___) => const HomeView());
             if (routeSettings.name == '/vocab') return PageRouteBuilder(pageBuilder: (_, __, ___) => const VocabView());
+            if (routeSettings.name == '/community') return PageRouteBuilder(pageBuilder: (_, __, ___) => const CommunityView());
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) {
@@ -121,8 +124,10 @@ class MyApp extends StatelessWidget {
                     return const AddTopicView();
                   case LeaderboardView.routeName:
                     return const LeaderboardView();
+                  case CommunitySearchView.routeName:
+                    return const CommunitySearchView();
                   default:
-                    return const LoginView();
+                    return const HomeView();
                 }
               },
             );

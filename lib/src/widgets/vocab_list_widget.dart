@@ -75,6 +75,7 @@ class VocabListWidget extends StatelessWidget {
                             fontWeight: FontWeight.w400,
                             color: Colors.white,
                           ),
+                          maxLines: 2,
                         ),
                         const SizedBox(
                           height: 8,
@@ -142,6 +143,7 @@ class VocabListWidget extends StatelessWidget {
                           fontWeight: FontWeight.w400,
                           color: Colors.white,
                         ),
+                        maxLines: 2,
                       ),
                       const SizedBox(
                         height: 8,

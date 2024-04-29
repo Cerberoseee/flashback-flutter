@@ -33,9 +33,9 @@ class BottomNaviBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Icon(
-            Icons.groups_2,
+            Icons.language,
           ),
-          label: 'Communities',
+          label: 'Exploring',
         ),
         BottomNavigationBarItem(
           icon: Icon(
