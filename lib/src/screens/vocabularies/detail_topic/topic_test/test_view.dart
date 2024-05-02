@@ -71,8 +71,9 @@ class _TestState extends State<TestView> {
       addedList.add(tempAnsIndex);
       loopIndex += 1;
     }
-    answerList.shuffle();
-    return answerList;
+    List<String> res = answerList.slice(0, 4);
+    res.shuffle();
+    return res;
   }
 
   void checkMultipleAns(String value) {
@@ -214,6 +215,8 @@ class _TestState extends State<TestView> {
       });
     }
     setState(() {
+      _questionNum += 1;
+
       _randomTFAns = (widget.answerType == AnswerType.definition) ? _vocabList[Random().nextInt(_vocabList.length)]['vi'] : _vocabList[Random().nextInt(_vocabList.length)]['en'];
       _multipleChoiceList = shuffleAnswer();
 
@@ -222,7 +225,6 @@ class _TestState extends State<TestView> {
         _timeEnd = DateTime.now();
         return;
       }
-      _questionNum += 1;
     });
     FocusScope.of(context).requestFocus(focusNode);
   }

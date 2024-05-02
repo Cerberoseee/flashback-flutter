@@ -22,9 +22,9 @@ class FlashcardVocabView extends StatefulWidget {
 class Vocabulary {
   final String en;
   final String vi;
-  VocabStatus status;
+  String status;
 
-  Vocabulary({this.en = "", this.vi = "", this.status = VocabStatus.unfavorite});
+  Vocabulary({this.en = "", this.vi = "", this.status = "unfavorite"});
 }
 
 class _FlashcardVocabState extends State<FlashcardVocabView> {
