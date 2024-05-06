@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_final/src/model/Folder.dart';
+import 'package:flutter_final/src/models/folder_model.dart';
 import 'package:flutter_final/src/services/user_services.dart';
 import 'package:logger/logger.dart';
 

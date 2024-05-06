@@ -25,6 +25,7 @@ class _DetailTopicState extends State<DetailTopicView> {
   late TextEditingController _editTopicNameController, _editTopicDescController;
 
   late FlutterTts flutterTts;
+  bool _visibleStatus = false;
 
   bool get isIOS => !kIsWeb && Platform.isIOS;
   bool get isAndroid => !kIsWeb && Platform.isAndroid;
@@ -106,6 +107,72 @@ class _DetailTopicState extends State<DetailTopicView> {
       },
     ]
   };
+
+  Future<void> showVisibleDialogue() async {
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateChild) {
+          return AlertDialog(
+            title: const Text(
+              "Set Folder Visibility",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RadioListTile(
+                  value: true,
+                  groupValue: _visibleStatus,
+                  title: const Row(children: [Icon(Icons.people_outline), SizedBox(width: 12), Text("Public")]),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                  onChanged: (value) {
+                    setStateChild(() {
+                      _visibleStatus = value ?? true;
+                    });
+                    setState(() {
+                      _visibleStatus = value ?? true;
+                    });
+                  },
+                ),
+                RadioListTile(
+                  value: false,
+                  groupValue: _visibleStatus,
+                  title: const Row(children: [Icon(Icons.lock_rounded), SizedBox(width: 12), Text("Private")]),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                  onChanged: (value) {
+                    setStateChild(() {
+                      _visibleStatus = value ?? true;
+                    });
+                    setState(() {
+                      _visibleStatus = value ?? false;
+                    });
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text(
+                  "Close",
+                  style: TextStyle(
+                    color: Color(0xFF76ABAE),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 
   Future<void> showEditDialogue() async {
     await showDialog(
@@ -236,6 +303,17 @@ class _DetailTopicState extends State<DetailTopicView> {
                     onTap: () {
                       Navigator.pop(context);
                       showDelDialogue();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
+                    title: const Text("Show Visibility"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showVisibleDialogue();
                     },
                   )
                 ],

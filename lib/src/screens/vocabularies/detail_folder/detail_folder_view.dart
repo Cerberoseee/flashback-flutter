@@ -17,6 +17,7 @@ class _DetailFolderState extends State<DetailFolderView> {
   final _editFormKey = GlobalKey<FormState>();
 
   late TextEditingController _editFolderNameController, _editFolderDescController;
+  bool _visibleStatus = false;
 
   @override
   void initState() {
@@ -207,6 +208,72 @@ class _DetailFolderState extends State<DetailFolderView> {
     );
   }
 
+  Future<void> showVisibleDialogue() async {
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateChild) {
+          return AlertDialog(
+            title: const Text(
+              "Set Folder Visibility",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RadioListTile(
+                  value: true,
+                  groupValue: _visibleStatus,
+                  title: const Row(children: [Icon(Icons.people_outline), SizedBox(width: 12), Text("Public")]),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                  onChanged: (value) {
+                    setStateChild(() {
+                      _visibleStatus = value ?? true;
+                    });
+                    setState(() {
+                      _visibleStatus = value ?? true;
+                    });
+                  },
+                ),
+                RadioListTile(
+                  value: false,
+                  groupValue: _visibleStatus,
+                  title: const Row(children: [Icon(Icons.lock_rounded), SizedBox(width: 12), Text("Private")]),
+                  controlAffinity: ListTileControlAffinity.trailing,
+                  onChanged: (value) {
+                    setStateChild(() {
+                      _visibleStatus = value ?? true;
+                    });
+                    setState(() {
+                      _visibleStatus = value ?? false;
+                    });
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                child: const Text(
+                  "Close",
+                  style: TextStyle(
+                    color: Color(0xFF76ABAE),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   void showBottomModalSheet() {
     showModalBottomSheet(
       context: context,
@@ -242,7 +309,18 @@ class _DetailFolderState extends State<DetailFolderView> {
                       Navigator.pop(context);
                       showDelDialogue();
                     },
-                  )
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.language,
+                      color: Colors.white,
+                    ),
+                    title: const Text("Set visibility"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showVisibleDialogue();
+                    },
+                  ),
                 ],
               ),
               ElevatedButton(

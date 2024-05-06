@@ -184,9 +184,11 @@ class _CommunityState extends State<CommunityView> {
       appBar: AppBarWidget(
         actionList: [
           IconButton(
-            onPressed: _isLoading ? null : () {
-              Navigator.pushNamed(context, "/community-search");
-            },
+            onPressed: _isLoading
+                ? null
+                : () {
+                    Navigator.pushNamed(context, "/community-search");
+                  },
             icon: const Icon(
               Icons.search,
               color: Colors.white,
@@ -205,7 +207,7 @@ class _CommunityState extends State<CommunityView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Exploring",
+                      "Exploring 🔍",
                       style: GoogleFonts.roboto(
                         fontSize: 24,
                         fontWeight: FontWeight.w500,
@@ -214,7 +216,7 @@ class _CommunityState extends State<CommunityView> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      "Random vocabulary",
+                      "Random vocabulary ❓",
                       style: GoogleFonts.roboto(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,

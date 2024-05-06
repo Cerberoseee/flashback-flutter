@@ -156,8 +156,9 @@ class _CommunitySearchState extends State<CommunitySearchView> with TickerProvid
           controller: _searchController,
           style: const TextStyle(color: Colors.white),
           cursorColor: Colors.white,
+          autofocus: true,
           decoration: const InputDecoration(
-            hintText: 'Search...',
+            hintText: 'Search for something... 🔍',
             hintStyle: TextStyle(color: Colors.white54),
             border: InputBorder.none,
           ),

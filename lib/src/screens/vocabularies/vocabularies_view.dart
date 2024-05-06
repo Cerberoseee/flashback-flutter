@@ -374,7 +374,7 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Vocabulary",
+              "Vocabulary 🔤",
               style: GoogleFonts.roboto(
                 fontSize: 24,
                 fontWeight: FontWeight.w500,

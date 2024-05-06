@@ -3,10 +3,10 @@ import 'package:flutter_final/src/services/user_services.dart';
 import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 import 'package:logger/logger.dart';
 
-class ForgotPasswordView extends StatelessWidget {
-  const ForgotPasswordView({super.key});
+class VerifyEmailView extends StatelessWidget {
+  const VerifyEmailView({super.key});
 
-  static const routeName = '/forgot-password';
+  static const routeName = '/verify-mail';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,8 +29,10 @@ class FormWidget extends StatefulWidget {
 
 class _FormWidgetState extends State<FormWidget> {
   final TextEditingController _forgotPasswordController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _obscureText = true, _isLoading = false;
+
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -39,7 +41,7 @@ class _FormWidgetState extends State<FormWidget> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "SEND RESET PASSWORD MAIL VIA EMAIL",
+            "SEND VERIFICATION EMAIL",
             style: TextStyle(
               fontSize: 12,
               color: Colors.white,
@@ -62,6 +64,26 @@ class _FormWidgetState extends State<FormWidget> {
               labelText: 'Enter your email',
             ),
           ),
+          const SizedBox(height: 18),
+          TextFormField(
+            controller: _passwordController,
+            obscureText: _obscureText,
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              labelText: 'Enter your password',
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+              ),
+            ),
+          ),
           const SizedBox(height: 20),
           SizedBox(
             width: double.infinity,
@@ -73,34 +95,27 @@ class _FormWidgetState extends State<FormWidget> {
                         setState(() {
                           _isLoading = true;
                         });
-                        forgotPassword(_forgotPasswordController.text).then((value) async {
-                          if (value) {
-                            setState(() {
-                              _isLoading = false;
-                            });
-                            await showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  title: const Text("Notification"),
-                                  content: const Text("A password reset email has been sent to your email address."),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text("OK"),
-                                    )
-                                  ],
-                                );
-                              },
-                            );
-                          } else {
-                            setState(() {
-                              _isLoading = false;
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again later!")));
-                          }
+                        verifyEmail(_forgotPasswordController.text, _passwordController.text).then((value) async {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                          await showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Notification"),
+                                content: const Text("A verification email has been sent to your email address."),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text("OK"),
+                                  )
+                                ],
+                              );
+                            },
+                          );
                         }).catchError((e) {
                           Logger().e(e);
                           setState(() {

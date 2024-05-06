@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_final/src/screens/authenticate/forgot_password/forgot_view.dart';
 import 'package:flutter_final/src/screens/authenticate/login/login_view.dart';
 import 'package:flutter_final/src/screens/authenticate/register/register_view.dart';
+import 'package:flutter_final/src/screens/authenticate/verify_email/verify_view.dart';
 import 'package:flutter_final/src/screens/communities/communities_search_view.dart';
 import 'package:flutter_final/src/screens/communities/communities_view.dart';
 import 'package:flutter_final/src/screens/home/home_view.dart';
@@ -98,6 +99,8 @@ class MyApp extends StatelessWidget {
                     return SettingsView(controller: settingsController);
                   case ForgotPasswordView.routeName:
                     return const ForgotPasswordView();
+                  case VerifyEmailView.routeName:
+                    return const VerifyEmailView();
                   case RegisterView.routeName:
                     return const RegisterView();
                   case DetailTopicView.routeName:
@@ -127,7 +130,7 @@ class MyApp extends StatelessWidget {
                   case CommunitySearchView.routeName:
                     return const CommunitySearchView();
                   default:
-                    return const HomeView();
+                    return const LoginView();
                 }
               },
             );

@@ -1,4 +1,4 @@
-import 'package:flutter_final/src/model/Topic.dart';
+import 'package:flutter_final/src/models/topic_model.dart';
 
 class Folder{
   String createdBy;

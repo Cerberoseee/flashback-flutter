@@ -1,4 +1,4 @@
-import 'package:flutter_final/src/model/Vocabulary.dart';
+import 'package:flutter_final/src/models/vocab_model.dart';
 
 class Topic{
   String createdBy;

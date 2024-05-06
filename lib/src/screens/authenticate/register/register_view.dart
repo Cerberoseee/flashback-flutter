@@ -1,10 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/screens/authenticate/login/login_view.dart';
 import 'package:flutter_final/src/services/user_services.dart';
-import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
-import 'package:flutter_final/src/model/Users.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RegisterView extends StatelessWidget {
   const RegisterView({super.key});
@@ -41,15 +38,14 @@ class FormWidget extends StatefulWidget {
 }
 
 class _FormWidgetState extends State<FormWidget> {
-  final FirebaseAuthService _auth = FirebaseAuthService();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool _obscureText = true;
   bool _obscureTextVerify = true;
   final _formKey = GlobalKey<FormState>();
   String password = "";
-  TextEditingController _usernameController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-  TextEditingController _emailController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  bool _isLoading = false, _isUsernameExist = false, _isEmailExist = false;
 
   @override
   void dispose() {
@@ -59,6 +55,7 @@ class _FormWidgetState extends State<FormWidget> {
     super.dispose();
   }
 
+  @override
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
@@ -76,6 +73,9 @@ class _FormWidgetState extends State<FormWidget> {
           TextFormField(
             controller: _usernameController,
             validator: (value) {
+              if (_isUsernameExist) {
+                return 'Username already exists!';
+              }
               if (value == null || value.isEmpty) {
                 return 'Please enter your username';
               }
@@ -93,6 +93,9 @@ class _FormWidgetState extends State<FormWidget> {
           TextFormField(
             controller: _emailController,
             validator: (value) {
+              if (_isEmailExist) {
+                return 'Email already exists!';
+              }
               if (value == null || value.isEmpty) {
                 return 'Please enter your email';
               }
@@ -185,25 +188,39 @@ class _FormWidgetState extends State<FormWidget> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  // ScaffoldMessenger.of(context).showSnackBar(
-                  //   const SnackBar(content: Text('Submitting Data')),
-                  // );
-                  _singUp();
-                }
-              },
+              onPressed: _isLoading
+                  ? null
+                  : () async {
+                      if (_formKey.currentState!.validate()) {
+                        _signUp();
+                      }
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF76ABAE),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.all(20),
               ),
-              child: const Text(
-                "SIGN UP",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "SIGN UP",
+                    style: TextStyle(
+                      color: !_isLoading ? Colors.white : Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.grey,
+                          ),
+                        )
+                      : Container(),
+                ],
               ),
             ),
           ),
@@ -213,41 +230,36 @@ class _FormWidgetState extends State<FormWidget> {
     );
   }
 
-  void _singUp() async {
+  void _signUp() {
     String username = _usernameController.text.trim();
     String password = _passwordController.text.trim();
     String email = _emailController.text.trim();
-    bool isUsernameExist = await isUsernameTaken(username);
-    bool isEmailExist = await isEmailTaken(email);
-
-    if (isUsernameExist) {
-      print('Username đã tồn tại');
-      return;
-    } else if (isEmailExist) {
-      print('Email đã được sử dụng');
-      return;
-    } else {
-      User? user = await _auth.signUpWithEmailAndPassword(email, password);
-
-      if (user != null) {
-        try {
-          Users newUser = Users(
-              avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/plashcard2.appspot.com/o/origin.jpg?alt=media&token=d10294c0-e645-49b1-8efd-1afcd9a1b08b',
-              email: email,
-              language: 'Tiếng Việt',
-              name: username,
-              status: 'Unblock',
-              username: username);
-
-          await _firestore.collection('users').doc(user.uid).set(newUser.toMap());
-          print("User is successfully created");
-          Navigator.pushNamed(context, "/home");
-        } catch (e) {
-          print('$e');
+    setState(() {
+      _isLoading = true;
+    });
+    isEmailTaken(email).then((isEmailExist) {
+      isUsernameTaken(username).then((isUsernameExist) {
+        setState(() {
+          _isUsernameExist = isUsernameExist;
+          _isEmailExist = isEmailExist;
+        });
+        if (!isUsernameExist && !isEmailExist) {
+          createUser(email, username, password).then((value) {
+            if (value) {
+              Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (BuildContext context) => const LoginView()), ModalRoute.withName('/login'));
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+            }
+          });
+        } else {
+          _formKey.currentState?.validate();
+          setState(() {
+            _isUsernameExist = false;
+            _isEmailExist = false;
+            _isLoading = false;
+          });
         }
-      } else {
-        print("Đăng ký không thành công");
-      }
-    }
+      });
+    });
   }
 }

@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "34818372698",
+    "firebase_url": "https://plashcard2-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "plashcard2",
     "storage_bucket": "plashcard2.appspot.com"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.example.flutter_final"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "34818372698-4tglsh309se742130m62sa634lmdn1ga.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_final",
+            "certificate_hash": "f3b0c8eb26c048bd5eb1ed8703e0dd71f4a3e63a"
+          }
+        },
+        {
+          "client_id": "34818372698-h2d5e144aj9gjtigj1s3jlvn9j79l93f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAfiosgIbXEqLDnArm0SxgFoXWYyBXX1g4"
@@ -20,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "34818372698-h2d5e144aj9gjtigj1s3jlvn9j79l93f.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "34818372698-8rhvvamreo1555dnjsho714rpe04mcp9.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterFinal"
+              }
+            }
+          ]
         }
       }
     }

@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/user_services.dart';
-import 'package:flutter_final/src/firebase_auth_implementation/firebase_auth_services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 
@@ -41,9 +40,10 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   bool _obscureText = true;
-  final FirebaseAuthService _auth = FirebaseAuthService();
+  final _auth = FirebaseAuth.instance;
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  bool _isLoading = false, _showVerifyMessage = false, _wrongLogin = false;
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +62,7 @@ class _LoginFormState extends State<LoginForm> {
           controller: _emailController,
           decoration: const InputDecoration(
               border: OutlineInputBorder(),
-              labelText: 'Enter your username',
+              labelText: 'Enter your username or email',
               labelStyle: TextStyle(
                 color: Colors.white,
               )),
@@ -94,21 +94,53 @@ class _LoginFormState extends State<LoginForm> {
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () => _singIn(context),
+            onPressed: _isLoading ? null : () => _signIn(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF76ABAE),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               padding: const EdgeInsets.all(20),
             ),
-            child: const Text(
-              "LOG IN",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "LOGIN",
+                  style: TextStyle(
+                    color: !_isLoading ? Colors.white : Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                _isLoading
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: Colors.grey,
+                        ),
+                      )
+                    : Container(),
+              ],
             ),
           ),
         ),
+        const SizedBox(height: 12),
+        _showVerifyMessage
+            ? Text(
+                "Please verify your account via your email",
+                style: TextStyle(
+                  color: Colors.red[400],
+                ),
+              )
+            : Container(),
+        _wrongLogin
+            ? Text(
+                "Incorrect username, email or password",
+                style: TextStyle(
+                  color: Colors.red[400],
+                ),
+              )
+            : Container(),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -121,6 +153,30 @@ class _LoginFormState extends State<LoginForm> {
                 cursor: SystemMouseCursors.click,
                 child: Text(
                   "Forget your password?",
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    decoration: TextDecoration.underline,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            const Spacer(),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, "/verify-mail");
+              },
+              child: const MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Text(
+                  "Verify your email",
                   textAlign: TextAlign.end,
                   style: TextStyle(
                     fontSize: 16,
@@ -156,28 +212,100 @@ class _LoginFormState extends State<LoginForm> {
               ),
             ),
           ],
-        )
+        ),
+        const SizedBox(height: 36),
+        const Text(
+          "OR YOU CAN LOGIN VIA",
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 24),
+        ElevatedButton(
+          style: ButtonStyle(
+            padding: MaterialStateProperty.all(
+              const EdgeInsets.all(24),
+            ),
+            backgroundColor: MaterialStateProperty.all(
+              const Color.fromARGB(255, 30, 61, 63),
+            ),
+          ),
+          onPressed: () async {
+            await signInWithGoogle().then((value) {
+              if (value) {
+                Navigator.popAndPushNamed(context, "/home");
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+              }
+            });
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Image.asset("/images/google_logo.png"),
+              ),
+              const Text(
+                "GOOGLE ACCOUNT",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
 
-  void _singIn(context) async {
+  void _signIn(context) async {
     final logger = Logger();
     String password = _passwordController.text.trim();
     String email = _emailController.text.trim();
     User? user;
-    if (isEmail(email)) {
-      user = await _auth.signInWithEmailAndPassword(email, password);
-    } else {
-      String? username = await getEmailFromUsername(email);
-      user = await _auth.signInWithEmailAndPassword(username.toString(), password);
+    setState(() {
+      _isLoading = true;
+      _showVerifyMessage = false;
+      _wrongLogin = false;
+    });
+
+    if (!isEmail(email)) {
+      email = await getEmailFromUsername(email) ?? "";
+    }
+
+    if (email != "") {
+      try {
+        UserCredential credential = await _auth.signInWithEmailAndPassword(email: email, password: password);
+        user = credential.user;
+      } catch (e) {
+        logger.e("Error pasword or username or email");
+        setState(() {
+          _wrongLogin = true;
+        });
+      }
     }
     //logger.e(user);
+    setState(() {
+      _isLoading = false;
+    });
     if (user != null) {
-      logger.i("User is successfully Log In");
-      Navigator.popAndPushNamed(context, "/home");
+      if (user.emailVerified) {
+        logger.i("User is successfully Log In");
+        Navigator.popAndPushNamed(context, "/home");
+      } else {
+        setState(() {
+          _showVerifyMessage = true;
+        });
+      }
     } else {
       logger.e("Error pasword or username or email");
+      setState(() {
+        _wrongLogin = true;
+      });
     }
   }
 }
