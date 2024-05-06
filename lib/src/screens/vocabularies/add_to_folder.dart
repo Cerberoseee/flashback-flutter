@@ -8,7 +8,7 @@ class AddToFolder extends StatefulWidget {
 
   static const routeName = "/add-to-folder";
 
-  const AddToFolder(this.topicId, {super.key});
+  const AddToFolder({required this.topicId, super.key});
 
   @override
   State<StatefulWidget> createState() => _AddToFolderState();

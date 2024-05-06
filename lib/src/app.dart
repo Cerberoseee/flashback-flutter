@@ -9,6 +9,7 @@ import 'package:flutter_final/src/screens/communities/communities_view.dart';
 import 'package:flutter_final/src/screens/home/home_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/add_new_topic.dart';
 import 'package:flutter_final/src/screens/vocabularies/add_to_folder.dart';
+// import 'package:flutter_final/src/screens/vocabularies/add_to_folder.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_folder/detail_folder_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/detail_topic_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/edit_topic_collection_view.dart';
@@ -37,6 +38,7 @@ class MyApp extends StatelessWidget {
       listenable: settingsController,
       builder: (BuildContext context, Widget? child) {
         return MaterialApp(
+          restorationScopeId: 'app',
           localizationsDelegates: const [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -107,10 +109,12 @@ class MyApp extends StatelessWidget {
                     return const LeaderboardView();
                   case CommunitySearchView.routeName:
                     return const CommunitySearchView();
+                  case AddToFolder.routeName:
+                    return AddToFolder(topicId: (routeSettings.arguments as Map)["topicId"]);
                   default:
-                    // if (FirebaseAuth.instance.currentUser != null) return const HomeView();
-                    return const AddToFolder("123");
-                  // return const LoginView();
+                    if (FirebaseAuth.instance.currentUser != null) return const HomeView();
+                    // return const AddToFolder("123");
+                    return const LoginView();
                 }
               },
             );
