@@ -307,7 +307,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                   ),
                   ListTile(
                     leading: const Icon(
-                      Icons.delete,
+                      Icons.language,
                       color: Colors.white,
                     ),
                     title: const Text("Show Visibility"),
@@ -315,7 +315,17 @@ class _DetailTopicState extends State<DetailTopicView> {
                       Navigator.pop(context);
                       showVisibleDialogue();
                     },
-                  )
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.folder,
+                      color: Colors.white,
+                    ),
+                    title: const Text("Add to Folder"),
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
                 ],
               ),
               ElevatedButton(

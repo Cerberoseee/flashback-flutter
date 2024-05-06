@@ -1,21 +1,19 @@
 import 'package:flutter_final/src/models/vocab_model.dart';
 
-class Topic{
+class Topic {
   String createdBy;
   String createdOn;
+  String description;
   bool status;
   String topicName;
-  String offset;
-  String total;
   Vocabulary? vocabulary;
 
   Topic({
     required this.createdBy,
     required this.createdOn,
     required this.status,
+    required this.description,
     required this.topicName,
-    required this.offset,
-    required this.total,
     this.vocabulary,
   });
 
@@ -24,9 +22,8 @@ class Topic{
       'createdBy': createdBy,
       'createdOn': createdOn.toString(),
       'status': status,
+      'description': description,
       'topicName': topicName,
-      'offset': offset,
-      'total': total,
       'vocabulary': vocabulary?.toMap(),
     };
   }
@@ -36,13 +33,9 @@ class Topic{
       createdBy: map['createdBy']['name'],
       createdOn: map['createdOn'],
       status: map['status'],
+      description: map['description'],
       topicName: map['topicName'],
-      offset: map['offset'],
-      total: map['total'],
-      vocabulary: map['vocabulary'] != null
-          ? Vocabulary.fromMap(map['vocabulary'])
-          : null,
+      vocabulary: map['vocabulary'] != null ? Vocabulary.fromMap(map['vocabulary']) : null,
     );
   }
-
 }

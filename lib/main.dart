@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:logger/logger.dart';
 import 'src/app.dart';
 import 'package:flutter_final/firebase_options.dart';
@@ -18,23 +19,16 @@ Future<void> main() async {
   await settingsController.loadSettings();
 
   if (kIsWeb) {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyAwQedtuCTitsAQ2RhFs5rLuqac8OYoeK0",
-        authDomain: "plashcard2.firebaseapp.com",
-        databaseURL: "https://plashcard2-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "plashcard2",
-        storageBucket: "plashcard2.appspot.com",
-        messagingSenderId: "34818372698",
-        appId: "1:34818372698:web:00f70fa38d804196399463",
-        measurementId: "G-28H83E6JHM",
-      ),
-    );
-  } else {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+    await FacebookAuth.i.webAndDesktopInitialize(
+      appId: "1608371026648757",
+      cookie: true,
+      xfbml: true,
+      version: "v15.0",
     );
   }
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Run the app and pass in the SettingsController. The app listens to the
   // SettingsController for changes, then passes it further down to the

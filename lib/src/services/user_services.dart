@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_final/src/models/users_model.dart';
 import 'package:path/path.dart' as path;
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -77,9 +78,24 @@ Future<bool> forgotPassword(String email) async {
   }
 }
 
-Future<String> getAvatarUrlByUsername(String username) async {
+Future<Map<String, dynamic>?> getUserByEmail(String userEmail) async {
   try {
-    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').where('username', isEqualTo: username).get();
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').where("email", isEqualTo: userEmail).get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      return querySnapshot.docs.first.data() as Map<String, dynamic>;
+    } else {
+      return null;
+    }
+  } catch (e) {
+    logger.e('$e');
+    return null;
+  }
+}
+
+Future<String> getAvatarUrlById(String username) async {
+  try {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').where(FieldPath.documentId, isEqualTo: username).get();
 
     if (querySnapshot.docs.isNotEmpty) {
       return (querySnapshot.docs.first.data() as Map<String, dynamic>)['avatarUrl'] as String;
@@ -194,17 +210,19 @@ Future<bool> signInWithGoogle() async {
     try {
       UserCredential cred = await FirebaseAuth.instance.signInWithCredential(credential);
 
-      Users newUser = Users(
-        avatarUrl: '',
-        email: cred.user?.email ?? "",
-        name: (cred.user?.displayName ?? "").split(" ").join("_"),
-        username: (cred.user?.displayName ?? "").split(" ").join("_"),
-      );
+      if (cred.additionalUserInfo!.isNewUser) {
+        Users newUser = Users(
+          avatarUrl: '',
+          email: cred.user?.email ?? "",
+          name: (cred.user?.displayName ?? ""),
+          username: "${(cred.user?.displayName ?? "").split(" ").join("_")}_${DateTime.now().microsecondsSinceEpoch.toString().substring(0, 6)}",
+        );
 
-      await _firestore.collection('users').doc(cred.user?.uid).set(newUser.toMap()).catchError((e) {
-        Logger().e('$e');
-        hasErr = true;
-      });
+        await _firestore.collection('users').doc(cred.user?.uid).set(newUser.toMap()).catchError((e) {
+          Logger().e('$e');
+          hasErr = true;
+        });
+      }
 
       return !hasErr;
     } catch (e) {
@@ -212,6 +230,47 @@ Future<bool> signInWithGoogle() async {
       return false;
     }
   } on Exception catch (e) {
+    Logger().e('exception->$e');
+    return false;
+  }
+}
+
+Future<bool> signInWithFacebook() async {
+  try {
+    final LoginResult result = await FacebookAuth.instance.login();
+    switch (result.status) {
+      case LoginStatus.success:
+        bool hasErr = false;
+        final AuthCredential facebookCredential = FacebookAuthProvider.credential(result.accessToken!.token);
+        final cred = await _auth.signInWithCredential(facebookCredential);
+
+        if (cred.additionalUserInfo!.isNewUser) {
+          Users newUser = Users(
+            avatarUrl: '',
+            email: cred.user?.email ?? "",
+            name: (cred.user?.displayName ?? ""),
+            username: "${(cred.user?.displayName ?? "").split(" ").join("_")}_${DateTime.now().microsecondsSinceEpoch.toString().substring(0, 6)}",
+          );
+
+          await _firestore.collection('users').doc(cred.user?.uid).set(newUser.toMap()).catchError((e) {
+            Logger().e('$e');
+            hasErr = true;
+          });
+        }
+
+        return !hasErr;
+      case LoginStatus.cancelled:
+        Logger().e('Login cancelled');
+        return false;
+
+      case LoginStatus.failed:
+        Logger().e('Login failed');
+        return false;
+
+      default:
+        return false;
+    }
+  } catch (e) {
     Logger().e('exception->$e');
     return false;
   }

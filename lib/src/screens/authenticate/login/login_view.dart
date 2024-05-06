@@ -258,6 +258,43 @@ class _LoginFormState extends State<LoginForm> {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        ElevatedButton(
+          style: ButtonStyle(
+            padding: MaterialStateProperty.all(
+              const EdgeInsets.all(24),
+            ),
+            backgroundColor: MaterialStateProperty.all(
+              const Color.fromARGB(255, 30, 61, 63),
+            ),
+          ),
+          onPressed: () async {
+            await signInWithFacebook().then((value) {
+              if (value) {
+                Navigator.popAndPushNamed(context, "/home");
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+              }
+            });
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: Image.asset("/images/facebook_logo.png"),
+              ),
+              const Text(
+                "FACEBOOK ACCOUNT",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

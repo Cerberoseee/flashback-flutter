@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+<string name="app_name">FlashBack</string>
+<string name="facebook_app_id">1608371026648757</string>
+<string name="fb_login_protocol_scheme">fb1608371026648757</string>
+<string name="facebook_client_token">b2de72a8907cc9f01df5b188692e17c2</string>
+</resources>

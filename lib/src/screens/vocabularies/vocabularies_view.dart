@@ -1,10 +1,13 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/folders_services.dart';
+import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 import 'package:flutter_final/src/widgets/bottom_navi_widget.dart';
 import 'package:flutter_final/src/widgets/vocab_list_widget.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:logger/logger.dart';
 
 class VocabView extends StatefulWidget {
   const VocabView({super.key});
@@ -19,6 +22,7 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
   late PageController _pageController;
   late TextEditingController _addFolderNameController, _addFolderDescController;
   final GlobalKey<FormState> _addFormKey = GlobalKey();
+  bool _isLoading = false;
 
   Future<void> showDelTopicDialogue(context) async {
     await showDialog(
@@ -109,10 +113,6 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
   }
 
   List<Map<String, dynamic>> _folders = [];
-  Future<void> _loadFolders() async {
-    _folders = await getAllFolder();
-    setState(() {});
-  }
   //  final List<Map<String, dynamic>> _folders = const [
   //   {
   //     "id": "1",
@@ -176,69 +176,69 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
   //   },
   // ];
 
-  final List<Map<String, dynamic>> _topics = const [
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-  ];
-
+  // List<Map<String, dynamic>> _topics = const [
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  // ];
+  List<Map<String, dynamic>> _topics = [];
   @override
   void initState() {
     _tabController = TabController(length: 2, vsync: this);
@@ -246,8 +246,42 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
     _addFolderNameController = TextEditingController();
     _addFolderDescController = TextEditingController();
 
-    _loadFolders();
+    fetchData();
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  void fetchData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      String? userId = FirebaseAuth.instance.currentUser?.uid;
+      String? userEmail = FirebaseAuth.instance.currentUser?.email;
+
+      if (userEmail != null && userId != null) {
+        List<Map<String, dynamic>> fetchFolder = await getUserFolder(userId, userEmail);
+        List<Map<String, dynamic>> fetchTopic = await getUserTopic(userId, userEmail);
+        if (mounted) {
+          setState(() {
+            _folders = fetchFolder;
+            _topics = fetchTopic;
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      Logger().e('Error fetching data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void showAddDialogue() async {
@@ -368,136 +402,193 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
           ),
         ],
       ),
-      body: Container(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Vocabulary 🔤",
-              style: GoogleFonts.roboto(
-                fontSize: 24,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFFEEEEEE),
-              ),
-            ),
-            const SizedBox(
-              height: 12,
-            ),
-            TabBar(
-              indicatorColor: const Color(0xFF76ABAE),
-              labelColor: const Color(0xFF76ABAE),
-              controller: _tabController,
-              onTap: (index) {
-                _pageController.animateToPage(
-                  index,
-                  duration: const Duration(
-                    milliseconds: 500,
-                  ),
-                  curve: Curves.ease,
-                );
-              },
-              tabs: const [
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.folder),
-                      SizedBox(width: 6.0),
-                      Text("Folders"),
-                    ],
-                  ),
-                ),
-                Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.book),
-                      SizedBox(width: 6.0),
-                      Text("Topics"),
-                    ],
-                  ),
-                )
-              ],
-            ),
-            Expanded(
-              flex: 1,
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (value) {
-                  _tabController.animateTo(
-                    value,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.ease,
-                  );
-                },
-                children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    child: ListView.separated(
-                      separatorBuilder: (context, index) => const Divider(),
-                      itemCount: _folders.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          margin: const EdgeInsets.only(
-                            top: 6,
-                            bottom: 6,
-                          ),
-                          child: VocabListWidget(
-                            onTap: () {
-                              Navigator.pushNamed(context, '/folder', arguments: {"id": _folders[index]["id"]});
-                            },
-                            title: _folders[index]["folderName"],
-                            description: _folders[index]["description"],
-                            icon: const Icon(Icons.folder),
-                            userName: _folders[index]["createdBy"]["username"],
-                            // userName: _folders[index]["createdBy"] is Map<String, dynamic>
-                            //           ? _folders[index]["createdBy"]["username"]
-                            //           : "Unknown User",
-
-                            // imgAvatar: _folders[index]["createdBy"] is Map<String, dynamic>
-                            //           ? _folders[index]["createdBy"]["avatarUrl"]
-                            //           : "Unknown IMG",
-                            imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
-                            isDeletable: true,
-                            deleteFunc: (ctx) => showDelFolderDialogue(buildContext),
-                          ),
-                        );
-                      },
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Container(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Vocabulary 🔤",
+                    style: GoogleFonts.roboto(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFFEEEEEE),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    child: ListView.separated(
-                      separatorBuilder: (context, index) => const Divider(),
-                      itemCount: _topics.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          margin: const EdgeInsets.only(
-                            top: 6,
-                            bottom: 6,
-                          ),
-                          child: VocabListWidget(
-                            onTap: () {
-                              Navigator.pushNamed(context, '/topic', arguments: {"id": _topics[index]["id"]});
-                            },
-                            title: _topics[index]["topicName"],
-                            description: _topics[index]["description"],
-                            icon: const Icon(Icons.book),
-                            userName: _topics[index]["createdBy"]["username"],
-                            isDeletable: true,
-                            deleteFunc: (ctx) => showDelTopicDialogue(buildContext),
-                          ),
+                  const SizedBox(
+                    height: 12,
+                  ),
+                  TabBar(
+                    indicatorColor: const Color(0xFF76ABAE),
+                    labelColor: const Color(0xFF76ABAE),
+                    controller: _tabController,
+                    onTap: (index) {
+                      _pageController.animateToPage(
+                        index,
+                        duration: const Duration(
+                          milliseconds: 500,
+                        ),
+                        curve: Curves.ease,
+                      );
+                    },
+                    tabs: const [
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.folder),
+                            SizedBox(width: 6.0),
+                            Text("Folders"),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.book),
+                            SizedBox(width: 6.0),
+                            Text("Topics"),
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (value) {
+                        _tabController.animateTo(
+                          value,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.ease,
                         );
                       },
+                      children: <Widget>[
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          child: _folders.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 128,
+                                        height: 128,
+                                        child: Image.asset("/images/folder_empty.png"),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      const Text(
+                                        "No Folder found",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const Text(
+                                        "Create your own folders by pressing the icon on top right corner",
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.separated(
+                                  separatorBuilder: (context, index) => const Divider(),
+                                  itemCount: _folders.length,
+                                  itemBuilder: (context, index) {
+                                    return Container(
+                                      margin: const EdgeInsets.only(
+                                        top: 6,
+                                        bottom: 6,
+                                      ),
+                                      child: VocabListWidget(
+                                        onTap: () {
+                                          Navigator.pushNamed(context, '/folder', arguments: {"id": _folders[index]["id"]});
+                                        },
+                                        title: _folders[index]["folderName"],
+                                        description: _folders[index]["description"],
+                                        icon: const Icon(Icons.folder),
+                                        userName: _folders[index]["createdBy"]["username"],
+                                        // userName: _folders[index]["createdBy"] is Map<String, dynamic>
+                                        //           ? _folders[index]["createdBy"]["username"]
+                                        //           : "Unknown User",
+
+                                        // imgAvatar: _folders[index]["createdBy"] is Map<String, dynamic>
+                                        //           ? _folders[index]["createdBy"]["avatarUrl"]
+                                        //           : "Unknown IMG",
+                                        imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
+                                        isDeletable: true,
+                                        deleteFunc: (ctx) => showDelFolderDialogue(buildContext),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          child: _topics.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      SizedBox(
+                                        width: 128,
+                                        height: 128,
+                                        child: Image.asset("/images/topic_empty.png"),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      const Text(
+                                        "No Topic found",
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const Text(
+                                        "Create your own topics by pressing the icon on top right corner",
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.separated(
+                                  separatorBuilder: (context, index) => const Divider(),
+                                  itemCount: _topics.length,
+                                  itemBuilder: (context, index) {
+                                    return Container(
+                                      margin: const EdgeInsets.only(
+                                        top: 6,
+                                        bottom: 6,
+                                      ),
+                                      child: VocabListWidget(
+                                        onTap: () {
+                                          Navigator.pushNamed(context, '/topic', arguments: {"id": _topics[index]["id"]});
+                                        },
+                                        title: _topics[index]["topicName"],
+                                        description: _topics[index]["description"],
+                                        icon: const Icon(Icons.book),
+                                        userName: _topics[index]["createdBy"]["username"],
+                                        imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
+                                        isDeletable: true,
+                                        deleteFunc: (ctx) => showDelTopicDialogue(buildContext),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
       bottomNavigationBar: BottomNaviBar(
         index: 1,
       ),
