@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/models/folder_model.dart';
 import 'package:flutter_final/src/services/folders_services.dart';
 import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
@@ -22,92 +23,158 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
   late PageController _pageController;
   late TextEditingController _addFolderNameController, _addFolderDescController;
   final GlobalKey<FormState> _addFormKey = GlobalKey();
-  bool _isLoading = false;
+  bool _isLoading = false, _isDialogueLoading = false;
 
-  Future<void> showDelTopicDialogue(context) async {
+  Future<void> showDelTopicDialogue(topicId) async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          "Delete Topic",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        content: const SizedBox(
-          width: 400,
-          child: Text("Are you sure you want to delete this topic?"),
-        ),
-        actions: [
-          TextButton(
-            child: const Text(
-              "Cancel",
+      builder: (ctx) => StatefulBuilder(
+        builder: (childCtx, setChildState) {
+          return AlertDialog(
+            title: const Text(
+              "Delete Topic",
               style: TextStyle(
-                color: Color(0xFF76ABAE),
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          TextButton(
-            child: const Text(
-              "Confirm",
-              style: TextStyle(
-                color: Color(0xFF76ABAE),
-              ),
+            content: const SizedBox(
+              width: 400,
+              child: Text("Are you sure you want to delete this topic?"),
             ),
-            onPressed: () {
-              //edit api service goes here
-              Navigator.pop(context);
-            },
-          ),
-        ],
+            actions: [
+              TextButton(
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: Color(0xFF76ABAE),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                },
+              ),
+              TextButton(
+                onPressed: _isDialogueLoading
+                    ? null
+                    : () async {
+                        setChildState(() {
+                          _isDialogueLoading = true;
+                        });
+                        setState(() {
+                          _isDialogueLoading = true;
+                        });
+                        await deleteTopic(topicId).then((result) {
+                          setChildState(() {
+                            _isDialogueLoading = false;
+                          });
+                          setState(() {
+                            _isDialogueLoading = false;
+                          });
+
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(result ? "Topic deleted successfully!" : "Topic deleted failed, please try again!"),
+                            ),
+                          );
+                          fetchData();
+                        });
+                      },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _isDialogueLoading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator()) : Container(),
+                    _isDialogueLoading ? const SizedBox(width: 12) : Container(),
+                    const Text(
+                      "Confirm",
+                      style: TextStyle(
+                        color: Color(0xFF76ABAE),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Future<void> showDelFolderDialogue(context) async {
+  Future<void> showDelFolderDialogue(folderId) async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          "Delete Folder",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        content: const SizedBox(
-          width: 400,
-          child: Text("Are you sure you want to delete this folder? This action only delete the folder but not the topics within it."),
-        ),
-        actions: [
-          TextButton(
-            child: const Text(
-              "Cancel",
+      builder: (ctx) => StatefulBuilder(
+        builder: (childCtx, setChildState) {
+          return AlertDialog(
+            title: const Text(
+              "Delete Folder",
               style: TextStyle(
-                color: Color(0xFF76ABAE),
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          TextButton(
-            child: const Text(
-              "Confirm",
-              style: TextStyle(
-                color: Color(0xFF76ABAE),
-              ),
+            content: const SizedBox(
+              width: 400,
+              child: Text("Are you sure you want to delete this folder? This action only delete the folder but not the topics within it."),
             ),
-            onPressed: () {
-              //edit api service goes here
-              Navigator.pop(context);
-            },
-          ),
-        ],
+            actions: [
+              TextButton(
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: Color(0xFF76ABAE),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                },
+              ),
+              TextButton(
+                onPressed: _isDialogueLoading
+                    ? null
+                    : () async {
+                        setChildState(() {
+                          _isDialogueLoading = true;
+                        });
+                        setState(() {
+                          _isDialogueLoading = true;
+                        });
+                        await deleteFolder(folderId).then((result) {
+                          setChildState(() {
+                            _isDialogueLoading = false;
+                          });
+                          setState(() {
+                            _isDialogueLoading = false;
+                          });
+
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(result ? "Folder deleted successfully!" : "Folder deleted failed, please try again!"),
+                            ),
+                          );
+                          fetchData();
+                        });
+                      },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _isDialogueLoading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator()) : Container(),
+                    _isDialogueLoading ? const SizedBox(width: 12) : Container(),
+                    const Text(
+                      "Confirm",
+                      style: TextStyle(
+                        color: Color(0xFF76ABAE),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -250,12 +317,8 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
     super.initState();
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   void fetchData() async {
+    _tabController.index = 0;
     setState(() {
       _isLoading = true;
     });
@@ -264,8 +327,8 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
       String? userEmail = FirebaseAuth.instance.currentUser?.email;
 
       if (userEmail != null && userId != null) {
-        List<Map<String, dynamic>> fetchFolder = await getUserFolder(userId, userEmail);
-        List<Map<String, dynamic>> fetchTopic = await getUserTopic(userId, userEmail);
+        List<Map<String, dynamic>> fetchFolder = await getUserFolder(userId, userEmail, 30);
+        List<Map<String, dynamic>> fetchTopic = await getUserTopic(userId, userEmail, 30);
         if (mounted) {
           setState(() {
             _folders = fetchFolder;
@@ -274,6 +337,7 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
           });
         }
       }
+      print(_topics);
     } catch (e) {
       Logger().e('Error fetching data: $e');
       if (mounted) {
@@ -287,50 +351,94 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
   void showAddDialogue() async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          "Add Folder",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        content: SizedBox(
-          width: 400,
-          child: AddEditWidget(
-            descriptionController: _addFolderDescController,
-            nameController: _addFolderNameController,
-            formKey: _addFormKey,
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: const Text(
-              "Cancel",
+      builder: (ctx) => StatefulBuilder(
+        builder: (childCtx, setChildState) {
+          return AlertDialog(
+            title: const Text(
+              "Add Folder",
               style: TextStyle(
-                color: Color(0xFF76ABAE),
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          TextButton(
-            child: const Text(
-              "Confirm",
-              style: TextStyle(
-                color: Color(0xFF76ABAE),
+            content: SizedBox(
+              width: 400,
+              child: AddEditWidget(
+                descriptionController: _addFolderDescController,
+                nameController: _addFolderNameController,
+                formKey: _addFormKey,
               ),
             ),
-            onPressed: () {
-              if (_addFormKey.currentState!.validate()) {
-                //edit api service goes here
-                Navigator.pop(context);
-                // _editFormKey.currentState.save();
-              }
-            },
-          ),
-        ],
+            actions: [
+              TextButton(
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: Color(0xFF76ABAE),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                },
+              ),
+              TextButton(
+                onPressed: _isDialogueLoading
+                    ? null
+                    : () async {
+                        if (_addFormKey.currentState!.validate()) {
+                          Folder newFolder = Folder(
+                            createdBy: FirebaseAuth.instance.currentUser!.uid,
+                            createdOn: DateTime.now(),
+                            description: _addFolderDescController.text,
+                            descriptionQuery: _addFolderDescController.text.toLowerCase(),
+                            folderName: _addFolderNameController.text,
+                            folderNameQuery: _addFolderNameController.text.toLowerCase(),
+                            status: "private",
+                            topic: [],
+                          );
+                          setChildState(() {
+                            _isDialogueLoading = true;
+                          });
+                          setState(() {
+                            _isDialogueLoading = true;
+                          });
+                          await createFolder(newFolder).then((result) {
+                            setChildState(() {
+                              _isDialogueLoading = false;
+                            });
+                            setState(() {
+                              _isDialogueLoading = false;
+                            });
+                            _addFolderDescController.text = "";
+                            _addFolderNameController.text = "";
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(result ? "Folder created successfully!" : "Folder created failed, please try again!"),
+                              ),
+                            );
+                            fetchData();
+                          });
+                          // _editFormKey.currentState.save();
+                        }
+                      },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _isDialogueLoading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator()) : Container(),
+                    _isDialogueLoading ? const SizedBox(width: 12) : Container(),
+                    const Text(
+                      "Confirm",
+                      style: TextStyle(
+                        color: Color(0xFF76ABAE),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -507,23 +615,19 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
                                         bottom: 6,
                                       ),
                                       child: VocabListWidget(
-                                        onTap: () {
-                                          Navigator.pushNamed(context, '/folder', arguments: {"id": _folders[index]["id"]});
+                                        onTap: () async {
+                                          var res = await Navigator.pushNamed(context, '/folder', arguments: {"id": _folders[index]["id"]});
+                                          if (res == true) {
+                                            fetchData();
+                                          }
                                         },
                                         title: _folders[index]["folderName"],
                                         description: _folders[index]["description"],
                                         icon: const Icon(Icons.folder),
                                         userName: _folders[index]["createdBy"]["username"],
-                                        // userName: _folders[index]["createdBy"] is Map<String, dynamic>
-                                        //           ? _folders[index]["createdBy"]["username"]
-                                        //           : "Unknown User",
-
-                                        // imgAvatar: _folders[index]["createdBy"] is Map<String, dynamic>
-                                        //           ? _folders[index]["createdBy"]["avatarUrl"]
-                                        //           : "Unknown IMG",
                                         imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
                                         isDeletable: true,
-                                        deleteFunc: (ctx) => showDelFolderDialogue(buildContext),
+                                        deleteFunc: (ctx) => showDelFolderDialogue(_folders[index]['id']),
                                       ),
                                     );
                                   },
@@ -568,16 +672,19 @@ class _VocabViewState extends State<VocabView> with TickerProviderStateMixin {
                                         bottom: 6,
                                       ),
                                       child: VocabListWidget(
-                                        onTap: () {
-                                          Navigator.pushNamed(context, '/topic', arguments: {"id": _topics[index]["id"]});
+                                        onTap: () async {
+                                          var res = await Navigator.pushNamed(context, '/topic', arguments: {"id": _topics[index]["id"]});
+                                          if (res == true) {
+                                            fetchData();
+                                          }
                                         },
                                         title: _topics[index]["topicName"],
                                         description: _topics[index]["description"],
                                         icon: const Icon(Icons.book),
                                         userName: _topics[index]["createdBy"]["username"],
-                                        imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
+                                        imgAvatar: _topics[index]["createdBy"]["avatarUrl"],
                                         isDeletable: true,
-                                        deleteFunc: (ctx) => showDelTopicDialogue(buildContext),
+                                        deleteFunc: (ctx) => showDelTopicDialogue(_topics[index]["id"]),
                                       ),
                                     );
                                   },

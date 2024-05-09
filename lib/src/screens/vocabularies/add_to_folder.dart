@@ -21,19 +21,19 @@ class _AddToFolderState extends State<AddToFolder> {
 
   Future<void> _fetchData() async {
     String? userId = FirebaseAuth.instance.currentUser!.uid;
-    String? userEmail = FirebaseAuth.instance.currentUser!.email;
+    String? userEmail = FirebaseAuth.instance.currentUser!.email ?? "";
 
     setState(() {
       _isLoading = true;
     });
 
-    List<Map<String, dynamic>> fetchFolder = await getUserFolder(userId, userEmail);
-    if (fetchFolder.isNotEmpty) {
-      fetchFolder.add(fetchFolder[0]);
-      fetchFolder.add(fetchFolder[0]);
-      fetchFolder.add(fetchFolder[0]);
-      fetchFolder.add(fetchFolder[0]);
-    }
+    List<Map<String, dynamic>> fetchFolder = await getUserFolder(userId, userEmail, 5);
+    // if (fetchFolder.isNotEmpty) {
+    //   fetchFolder.add(fetchFolder[0]);
+    //   fetchFolder.add(fetchFolder[0]);
+    //   fetchFolder.add(fetchFolder[0]);
+    //   fetchFolder.add(fetchFolder[0]);
+    // }
 
     fetchFolder = fetchFolder.map((e) {
       return {...e, 'isSelected': false};

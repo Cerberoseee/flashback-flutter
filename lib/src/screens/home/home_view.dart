@@ -62,8 +62,8 @@ class _HomeViewState extends State<HomeView> {
           });
         }
       }
-      List<Map<String, dynamic>> fetchFolder = await getRecentFolder();
-      List<Map<String, dynamic>> fetchTopic = await getRecentTopic();
+      List<Map<String, dynamic>> fetchFolder = await getRecentFolder(5);
+      List<Map<String, dynamic>> fetchTopic = await getRecentTopic(5);
 
       setState(() {
         _folders = fetchFolder;

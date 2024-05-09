@@ -93,6 +93,21 @@ Future<Map<String, dynamic>?> getUserByEmail(String userEmail) async {
   }
 }
 
+Future<Map<String, dynamic>?> getUserByUID(uid) async {
+  try {
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').where(FieldPath.documentId, isEqualTo: uid).get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      return querySnapshot.docs.first.data() as Map<String, dynamic>;
+    } else {
+      return null;
+    }
+  } catch (e) {
+    logger.e(e);
+    return null;
+  }
+}
+
 Future<String> getAvatarUrlById(String username) async {
   try {
     QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('users').where(FieldPath.documentId, isEqualTo: username).get();
@@ -229,7 +244,7 @@ Future<bool> signInWithGoogle() async {
       Logger().e('$e');
       return false;
     }
-  } on Exception catch (e) {
+  } catch (e) {
     Logger().e('exception->$e');
     return false;
   }

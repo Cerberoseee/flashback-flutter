@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter_final/src/models/topic_model.dart';
 import 'package:flutter_final/src/services/user_services.dart';
 import 'package:logger/logger.dart';
@@ -7,59 +8,56 @@ import 'package:shared_preferences/shared_preferences.dart';
 var logger = Logger();
 FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-Future<List<Map<String, dynamic>>> getRecentTopic() async {
+Future<List<Map<String, dynamic>>> getRecentTopic(int limit) async {
   try {
     SharedPreferences pref = await SharedPreferences.getInstance();
     List<String> recentList = pref.getStringList("recentTopicList") ?? [""];
 
-    QuerySnapshot querySnapshot = await firestore.collection('topics').where(FieldPath.documentId, whereIn: recentList).get();
-    List<Map<String, dynamic>> folderList = [];
+    QuerySnapshot topicQuerySnapshot = await firestore.collection('topics').where(FieldPath.documentId, whereIn: recentList).limit(limit).get();
+    QuerySnapshot userQuerySnapshot = await firestore.collection('users').get();
 
-    for (int i = 0; i < querySnapshot.docs.length; i++) {
-      QueryDocumentSnapshot doc = querySnapshot.docs[i];
-      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    List<QueryDocumentSnapshot> userData = userQuerySnapshot.docs;
+    List<Map<String, dynamic>> res = [];
 
-      data['id'] = doc.id;
-      String username = data['createdBy'].toString();
-      String avatarUrl = await getAvatarUrlById(username);
+    for (QueryDocumentSnapshot topic in topicQuerySnapshot.docs) {
+      var user = userData.firstWhereOrNull((element) => (topic.data() as Map<String, dynamic>)["createdBy"] == element.id)?.data() ?? {};
+      var data = topic.data() as Map<String, dynamic>;
+      data['id'] = topic.id;
 
-      Map<String, dynamic> folderData = {
+      data["createdBy"] = user;
+      Map<String, dynamic> topicData = {
         'id': data['id'],
-        'folderName': data['topicName'] ?? '',
+        'topicName': data['topicName'] ?? '',
         'description': data['description'] ?? '',
-        'createdBy': {
-          'username': username,
-          'avatarUrl': avatarUrl,
-        },
+        'createdBy': data['createdBy'],
         'createdOn': data['createdOn'] ?? '',
       };
-
-      folderList.add(folderData);
+      res.add(topicData);
     }
-    return folderList;
+    return res;
   } catch (e) {
     logger.e(e);
     return [];
   }
 }
 
-Future<List<Map<String, dynamic>>> getUserTopic(userId, userEmail) async {
+Future<List<Map<String, dynamic>>> getUserTopic(String userId, String userEmail, int limit) async {
   try {
-    QuerySnapshot querySnapshot = await firestore.collection('topics').where("createdBy", isEqualTo: userId).get();
+    QuerySnapshot querySnapshot = await firestore.collection('topics').where("createdBy", isEqualTo: userId).limit(limit).get();
     List<Map<String, dynamic>> topicList = [];
     dynamic user = await getUserByEmail(userEmail);
+    List<QueryDocumentSnapshot> doc = querySnapshot.docs;
 
     for (int i = 0; i < querySnapshot.docs.length; i++) {
-      QueryDocumentSnapshot doc = querySnapshot.docs[i];
-      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      Map<String, dynamic> data = doc[i].data() as Map<String, dynamic>;
 
-      data['id'] = doc.id;
+      data['id'] = doc[i].id;
       Map<String, dynamic> topicData = {
         'id': data['id'],
         'topicName': data['topicName'] ?? '',
         'description': data['description'] ?? '',
         'createdBy': {
-          'username': user["name"],
+          'username': user["username"],
           'avatarUrl': user["avatarUrl"],
         },
         'createdOn': data['createdOn'] ?? '',
@@ -74,11 +72,100 @@ Future<List<Map<String, dynamic>>> getUserTopic(userId, userEmail) async {
   }
 }
 
-Future<void> createTopic(Topic topic) async {
+Future<bool> createTopic(Topic topic) async {
   try {
     Map<String, dynamic> topicData = topic.toMap();
     await firestore.collection('topics').add(topicData);
+    return true;
   } catch (e) {
     logger.e('Error creating folder: $e');
+    return false;
+  }
+}
+
+Future<List<Map<String, dynamic>>> getAllTopic(int limit) async {
+  try {
+    QuerySnapshot topicQuerySnapshot = await firestore.collection('topics').limit(limit).get();
+    QuerySnapshot userQuerySnapshot = await firestore.collection('users').get();
+
+    List<QueryDocumentSnapshot> userData = userQuerySnapshot.docs;
+    List<Map<String, dynamic>> res = [];
+
+    for (QueryDocumentSnapshot topic in topicQuerySnapshot.docs) {
+      var user = userData.firstWhereOrNull((element) => (topic.data() as Map<String, dynamic>)["createdBy"] == element.id)?.data() ?? {};
+      var data = topic.data() as Map<String, dynamic>;
+      data['id'] = topic.id;
+
+      data["createdBy"] = user;
+      Map<String, dynamic> topicData = {
+        'id': data['id'],
+        'topicName': data['topicName'] ?? '',
+        'description': data['description'] ?? '',
+        'createdBy': data['createdBy'],
+        'createdOn': data['createdOn'] ?? '',
+      };
+      res.add(topicData);
+    }
+    return res;
+  } catch (e) {
+    logger.e(e);
+    return [];
+  }
+}
+
+Future<List<Map<String, dynamic>>> searchTopic(int limit, String term) async {
+  try {
+    if (term == "") return [];
+    QuerySnapshot topic1QuerySnapshot = await firestore
+        .collection('topics')
+        .where("topicNameQuery", isGreaterThanOrEqualTo: term.toLowerCase())
+        .where("topicNameQuery", isLessThanOrEqualTo: "${term.toLowerCase()}\uf8ff")
+        .limit(limit)
+        .get();
+    QuerySnapshot topic2QuerySnapshot = await firestore
+        .collection('topics')
+        .where("descriptionQuery", isGreaterThanOrEqualTo: term.toLowerCase())
+        .where("descriptionQuery", isLessThanOrEqualTo: "${term.toLowerCase()}\uf8ff")
+        .limit(limit)
+        .get();
+    QuerySnapshot userQuerySnapshot = await firestore.collection('users').get();
+
+    List<QueryDocumentSnapshot> userData = userQuerySnapshot.docs;
+    List<QueryDocumentSnapshot> topicData = topic1QuerySnapshot.docs;
+    topicData.addAll(topic2QuerySnapshot.docs);
+    final ids = topicData.map((e) => e.id).toSet();
+    topicData.retainWhere((x) => ids.remove(x.id));
+
+    List<Map<String, dynamic>> res = [];
+
+    for (QueryDocumentSnapshot topic in topicData) {
+      var user = userData.firstWhereOrNull((element) => (topic.data() as Map<String, dynamic>)["createdBy"] == element.id)?.data() ?? {};
+      var data = topic.data() as Map<String, dynamic>;
+      data['id'] = topic.id;
+
+      data["createdBy"] = user;
+      Map<String, dynamic> topicData = {
+        'id': data['id'],
+        'topicName': data['topicName'] ?? '',
+        'description': data['description'] ?? '',
+        'createdBy': data['createdBy'],
+        'createdOn': data['createdOn'] ?? '',
+      };
+      res.add(topicData);
+    }
+    return res;
+  } catch (e) {
+    logger.e(e);
+    return [];
+  }
+}
+
+Future<bool> deleteTopic(String topicId) async {
+  try {
+    await FirebaseFirestore.instance.collection('topics').doc(topicId).delete();
+    return true;
+  } catch (e) {
+    logger.e('Error deleting folder: $e');
+    return false;
   }
 }

@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/services/folders_services.dart';
+import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_final/src/widgets/vocab_list_widget.dart';
 
 class CommunitySearchView extends StatefulWidget {
@@ -14,6 +18,10 @@ class _CommunitySearchState extends State<CommunitySearchView> with TickerProvid
   late TabController _tabController;
   late PageController _pageController;
 
+  bool _isLoading = false;
+
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
@@ -22,131 +30,158 @@ class _CommunitySearchState extends State<CommunitySearchView> with TickerProvid
     _pageController = PageController();
   }
 
-  final List<Map<String, dynamic>> _folders = const [
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-  ];
+  List<Map<String, dynamic>> _folders = [];
+  List<Map<String, dynamic>> _topics = [];
 
-  final List<Map<String, dynamic>> _topics = const [
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-  ];
+  // final List<Map<String, dynamic>> _folders = const [
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  // ];
+
+  // final List<Map<String, dynamic>> _topics = const [
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  // ];
+
+  Future<void> fetchApi(term) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    List<Map<String, dynamic>> fetchFolder = await searchFolder(30, term);
+    List<Map<String, dynamic>> fetchTopic = await searchTopic(30, term);
+
+    if (mounted) {
+      setState(() {
+        _folders = fetchFolder;
+        _topics = fetchTopic;
+        _isLoading = false;
+      });
+    }
+  }
+
+  _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      fetchApi(query);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +198,7 @@ class _CommunitySearchState extends State<CommunitySearchView> with TickerProvid
             border: InputBorder.none,
           ),
           onChanged: (value) {
-            setState(() {});
+            _onSearchChanged(value);
           },
         ),
       ),
@@ -190,20 +225,10 @@ class _CommunitySearchState extends State<CommunitySearchView> with TickerProvid
               },
               tabs: const [
                 Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Folders"),
-                    ],
-                  ),
+                  child: Text("Folders"),
                 ),
                 Tab(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Topics"),
-                    ],
-                  ),
+                  child: Text("Topics"),
                 )
               ],
             ),
@@ -219,64 +244,61 @@ class _CommunitySearchState extends State<CommunitySearchView> with TickerProvid
                   );
                 },
                 children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    child: ListView.separated(
-                      separatorBuilder: (context, index) => const Divider(),
-                      itemCount: _folders.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          margin: const EdgeInsets.only(
-                            top: 6,
-                            bottom: 6,
-                          ),
-                          child: VocabListWidget(
-                            onTap: () {
-                              Navigator.pushNamed(context, '/folder', arguments: {"id": _folders[index]["id"]});
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : Container(
+                          padding: const EdgeInsets.all(6),
+                          child: ListView.separated(
+                            separatorBuilder: (context, index) => const Divider(),
+                            itemCount: _folders.length,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                margin: const EdgeInsets.only(
+                                  top: 6,
+                                  bottom: 6,
+                                ),
+                                child: VocabListWidget(
+                                  onTap: () {
+                                    Navigator.pushNamed(context, '/folder', arguments: {"id": _folders[index]["id"]});
+                                  },
+                                  title: _folders[index]["folderName"],
+                                  description: _folders[index]["description"],
+                                  icon: const Icon(Icons.folder),
+                                  userName: _folders[index]["createdBy"]["username"] ?? "",
+                                  imgAvatar: _folders[index]["createdBy"]["avatarUrl"] ?? "",
+                                  isDeletable: false,
+                                ),
+                              );
                             },
-                            title: _folders[index]["folderName"],
-                            description: _folders[index]["description"],
-                            icon: const Icon(Icons.folder),
-                            userName: _folders[index]["createdBy"]["username"],
-                            // userName: _folders[index]["createdBy"] is Map<String, dynamic>
-                            //           ? _folders[index]["createdBy"]["username"]
-                            //           : "Unknown User",
-
-                            // imgAvatar: _folders[index]["createdBy"] is Map<String, dynamic>
-                            //           ? _folders[index]["createdBy"]["avatarUrl"]
-                            //           : "Unknown IMG",
-                            imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
-                            isDeletable: false,
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    child: ListView.separated(
-                      separatorBuilder: (context, index) => const Divider(),
-                      itemCount: _topics.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          margin: const EdgeInsets.only(
-                            top: 6,
-                            bottom: 6,
-                          ),
-                          child: VocabListWidget(
-                            onTap: () {
-                              Navigator.pushNamed(context, '/topic', arguments: {"id": _topics[index]["id"]});
+                        ),
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : Container(
+                          padding: const EdgeInsets.all(6),
+                          child: ListView.separated(
+                            separatorBuilder: (context, index) => const Divider(),
+                            itemCount: _topics.length,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                margin: const EdgeInsets.only(
+                                  top: 6,
+                                  bottom: 6,
+                                ),
+                                child: VocabListWidget(
+                                  onTap: () {
+                                    Navigator.pushNamed(context, '/topic', arguments: {"id": _topics[index]["id"]});
+                                  },
+                                  title: _topics[index]["topicName"],
+                                  description: _topics[index]["description"],
+                                  icon: const Icon(Icons.book),
+                                  userName: _topics[index]["createdBy"]["username"] ?? "",
+                                  isDeletable: false,
+                                ),
+                              );
                             },
-                            title: _topics[index]["topicName"],
-                            description: _topics[index]["description"],
-                            icon: const Icon(Icons.book),
-                            userName: _topics[index]["createdBy"]["username"],
-                            isDeletable: false,
                           ),
-                        );
-                      },
-                    ),
-                  ),
+                        ),
                 ],
               ),
             ),

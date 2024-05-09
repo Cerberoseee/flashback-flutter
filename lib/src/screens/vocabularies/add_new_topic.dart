@@ -1,7 +1,10 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/helper/vocab_import_export.dart';
+import 'package:flutter_final/src/models/topic_model.dart';
+import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:collection/collection.dart';
 
@@ -20,7 +23,7 @@ class _AddTopicState extends State<AddTopicView> {
 
   late TextEditingController _editTopicDescController, _editTopicNameController;
 
-  bool _isNameEmpty = false, _isListContainEmpty = false;
+  bool _isNameEmpty = false, _isListContainEmpty = false, _isLoading = false;
 
   final List<Map<String, dynamic>> _listVocabu = List.generate(
     3,
@@ -38,7 +41,7 @@ class _AddTopicState extends State<AddTopicView> {
   }
 
   void deleteFunc(index) {
-    if (_listVocabu.length > 2) {
+    if (_listVocabu.length > 1) {
       _listVocabu.removeAt(index);
       builder(context, animation) {
         return _buildItem(index > 0 ? index - 1 : index, animation);
@@ -124,8 +127,40 @@ class _AddTopicState extends State<AddTopicView> {
     );
   }
 
-  void createTopic() {
-    validateAdd();
+  void createTopicSubmit() async {
+    if (validateAdd()) {
+      Topic newTopic = Topic(
+        createdBy: FirebaseAuth.instance.currentUser!.uid,
+        createdOn: DateTime.now(),
+        status: "private",
+        description: _editTopicDescController.text,
+        topicName: _editTopicNameController.text,
+        descriptionQuery: _editTopicDescController.text.toLowerCase(),
+        topicNameQuery: _editTopicNameController.text.toLowerCase(),
+        vocabulary: _listVocabu.map((e) {
+          return {
+            "en": e["en"],
+            "status": "unfavorite",
+            "vi": e["vi"],
+          };
+        }).toList(),
+      );
+      setState(() {
+        _isLoading = true;
+      });
+      bool res = await createTopic(newTopic);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res ? "Topic created successfully!" : "Topic created failed, please try again!")));
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/vocab',
+          (Route<dynamic> route) => false,
+        );
+      }
+    }
   }
 
   bool validateAdd() {
@@ -160,105 +195,109 @@ class _AddTopicState extends State<AddTopicView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Create new Topic"),
+        title: const Text("Add new Topic"),
         actions: [
-          IconButton(onPressed: createTopic, icon: const Icon(Icons.done)),
+          IconButton(onPressed: createTopicSubmit, icon: const Icon(Icons.done)),
         ],
       ),
       body: Container(
         padding: const EdgeInsets.all(12),
         child: SingleChildScrollView(
           controller: _scrollController,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Topic name",
-                    style: TextStyle(fontSize: 14, color: Colors.white),
-                  ),
-                  const SizedBox(height: 4),
-                  TextFormField(
-                    controller: _editTopicNameController,
-                    decoration: InputDecoration(
-                      labelStyle: const TextStyle(
-                        color: Colors.white,
-                      ),
-                      border: const OutlineInputBorder(),
-                      hintText: 'Enter name',
-                      errorText: _isNameEmpty ? "Please enter the topic name!" : null,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Topic description (Optional)",
-                    style: TextStyle(fontSize: 14, color: Colors.white),
-                  ),
-                  const SizedBox(height: 4),
-                  TextFormField(
-                    controller: _editTopicDescController,
-                    decoration: const InputDecoration(
-                      labelStyle: TextStyle(
-                        color: Colors.white,
-                      ),
-                      border: OutlineInputBorder(),
-                      hintText: 'Enter description (optional)',
-                    ),
-                    maxLines: 4,
-                    minLines: 4,
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 12,
-              ),
-              TextButton(
-                onPressed: () async {
-                  List<dynamic> vocabList = await VocabImportExport.importVocab();
-                  setState(() {
-                    _listVocabu.insertAll(0, vocabList.map((e) => {"en": e[0], "vi": e[1]}));
-                    _listKey.currentState!.insertAllItems(0, vocabList.length);
-                  });
-                },
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
+          child: _isLoading
+              ? const Center(
+                  child: Column(children: [CircularProgressIndicator(), Text("Adding Topic...")]),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.add,
-                      color: Color(0xFF76ABAE),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          "Topic name",
+                          style: TextStyle(fontSize: 14, color: Colors.white),
+                        ),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: _editTopicNameController,
+                          decoration: InputDecoration(
+                            labelStyle: const TextStyle(
+                              color: Colors.white,
+                            ),
+                            border: const OutlineInputBorder(),
+                            hintText: 'Enter name',
+                            errorText: _isNameEmpty ? "Please enter the topic name!" : null,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "Topic description (Optional)",
+                          style: TextStyle(fontSize: 14, color: Colors.white),
+                        ),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: _editTopicDescController,
+                          decoration: const InputDecoration(
+                            labelStyle: TextStyle(
+                              color: Colors.white,
+                            ),
+                            border: OutlineInputBorder(),
+                            hintText: 'Enter description (optional)',
+                          ),
+                          maxLines: 4,
+                          minLines: 4,
+                        ),
+                      ],
                     ),
-                    Text(
-                      "Add via csv file",
-                      style: TextStyle(
-                        color: Color(0xFF76ABAE),
+                    const SizedBox(
+                      height: 12,
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        List<dynamic> vocabList = await VocabImportExport.importVocab();
+                        setState(() {
+                          _listVocabu.insertAll(0, vocabList.map((e) => {"en": e[0], "vi": e[1]}));
+                          _listKey.currentState!.insertAllItems(0, vocabList.length);
+                        });
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add,
+                            color: Color(0xFF76ABAE),
+                          ),
+                          Text(
+                            "Add via csv file",
+                            style: TextStyle(
+                              color: Color(0xFF76ABAE),
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(
+                      height: 24,
+                    ),
+                    _isListContainEmpty
+                        ? Text(
+                            "Please fill in all the card you created, or delete the empty cards!",
+                            style: TextStyle(color: Colors.red[400]),
+                          )
+                        : Container(),
+                    AnimatedList(
+                      key: _listKey,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      initialItemCount: _listVocabu.length,
+                      itemBuilder: (context, index, animation) {
+                        return _buildItem(index, animation);
+                      },
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(
-                height: 24,
-              ),
-              _isListContainEmpty
-                  ? Text(
-                      "Please fill in all the card you created, or delete the empty cards!",
-                      style: TextStyle(color: Colors.red[400]),
-                    )
-                  : Container(),
-              AnimatedList(
-                key: _listKey,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                initialItemCount: _listVocabu.length,
-                itemBuilder: (context, index, animation) {
-                  return _buildItem(index, animation);
-                },
-              ),
-            ],
-          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/services/folders_services.dart';
 import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_final/src/widgets/vocab_list_widget.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class DetailFolderView extends StatefulWidget {
   final String id;
@@ -17,105 +19,110 @@ class _DetailFolderState extends State<DetailFolderView> {
   final _editFormKey = GlobalKey<FormState>();
 
   late TextEditingController _editFolderNameController, _editFolderDescController;
-  bool _visibleStatus = false;
+  bool _visibleStatus = false, _isLoading = false, _isDialogueLoading = false;
 
   @override
   void initState() {
     super.initState();
     _editFolderNameController = TextEditingController();
     _editFolderDescController = TextEditingController();
+    fetchData();
   }
 
-  final Map<String, dynamic> _detailFolder = const {
-    "id": "1",
-    "folderName": "Test",
-    "description": "Test description",
-    "createdBy": {
-      "username": "test",
-      "avatarUrl": "",
-    },
-    "topics": [
-      {
-        "id": "1",
-        "topicName": "Test",
-        "description": "test description",
-        "createdBy": {
-          "username": "test",
-          "avatarUrl": "",
-        },
-        "createdOn": "30/03/2023"
-      },
-      {
-        "id": "1",
-        "topicName": "Test",
-        "description": "test description",
-        "createdBy": {
-          "username": "test",
-          "avatarUrl": "",
-        },
-        "createdOn": "30/03/2023"
-      },
-      {
-        "id": "1",
-        "topicName": "Test",
-        "description": "test description",
-        "createdBy": {
-          "username": "test",
-          "avatarUrl": "",
-        },
-        "createdOn": "30/03/2023"
-      },
-      {
-        "id": "1",
-        "topicName": "Test",
-        "description": "test description",
-        "createdBy": {
-          "username": "test",
-          "avatarUrl": "",
-        },
-        "createdOn": "30/03/2023"
-      },
-    ],
-    "createdOn": "30/03/2023"
-  };
+  Map<String, dynamic> _detailFolder = {};
+
+  void fetchData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await getFolderDetail(widget.id).then((folder) {
+      if (folder != null) {
+        if (mounted) {
+          setState(() {
+            _detailFolder = folder;
+            _isLoading = false;
+            _visibleStatus = folder["status"] == "public";
+          });
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+        Navigator.of(context).pop();
+      }
+    });
+  }
 
   Future<void> showEditDialogue() async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          "Edit Folder",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        content: SizedBox(
-          width: 400,
-          child: AddEditWidget(
-            descriptionController: _editFolderDescController,
-            nameController: _editFolderNameController,
-            formKey: _editFormKey,
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: const Text("Cancel"),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          TextButton(
-            child: const Text("Confirm"),
-            onPressed: () {
-              if (_editFormKey.currentState!.validate()) {
-                //edit api service goes here
-                Navigator.pop(context);
-                // _editFormKey.currentState.save();
-              }
-            },
-          ),
-        ],
+      builder: (ctxParent) => StatefulBuilder(
+        builder: (ctx, setChildState) {
+          return AlertDialog(
+            title: const Text(
+              "Edit Folder",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            content: SizedBox(
+              width: 400,
+              child: AddEditWidget(
+                descriptionController: _editFolderDescController,
+                nameController: _editFolderNameController,
+                formKey: _editFormKey,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                },
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: _isDialogueLoading
+                    ? null
+                    : () async {
+                        if (_editFormKey.currentState!.validate()) {
+                          setChildState(() {
+                            _isDialogueLoading = true;
+                          });
+                          setState(() {
+                            _isDialogueLoading = true;
+                          });
+                          await patchFolder(_detailFolder["id"], {
+                            "folderName": _editFolderNameController.text,
+                            "description": _editFolderDescController.text,
+                          }).then((res) {
+                            setChildState(() {
+                              _isDialogueLoading = false;
+                            });
+                            setState(() {
+                              _isDialogueLoading = false;
+                            });
+                            if (res) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Folder edited successfully!")));
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Folder edited failed, please try again!")));
+                            }
+                            Navigator.pop(ctx);
+                            fetchData();
+                          });
+                          // _editFormKey.currentState.save();
+                        }
+                      },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _isDialogueLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator()) : Container(),
+                    _isDialogueLoading ? const SizedBox(width: 12) : Container(),
+                    const Text("Confirm"),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -123,88 +130,144 @@ class _DetailFolderState extends State<DetailFolderView> {
   Future<void> showDelDialogue() async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          "Delete Folder",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        content: const SizedBox(
-          width: 400,
-          child: Text("Are you sure you want to delete this folder? This action only delete the folder but not the topics within it."),
-        ),
-        actions: [
-          TextButton(
-            child: const Text(
-              "Cancel",
+      builder: (ctxParent) => StatefulBuilder(
+        builder: (ctx, setChildState) {
+          return AlertDialog(
+            title: const Text(
+              "Delete Folder",
               style: TextStyle(
-                color: Color(0xFF76ABAE),
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          TextButton(
-            child: const Text(
-              "Confirm",
-              style: TextStyle(
-                color: Color(0xFF76ABAE),
-              ),
+            content: const SizedBox(
+              width: 400,
+              child: Text("Are you sure you want to delete this folder? This action only delete the folder but not the topics within it."),
             ),
-            onPressed: () {
-              //edit api service goes here
-              Navigator.pop(context);
-            },
-          ),
-        ],
+            actions: [
+              TextButton(
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: Color(0xFF76ABAE),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+              TextButton(
+                onPressed: _isDialogueLoading
+                    ? null
+                    : () async {
+                        setChildState(() {
+                          _isDialogueLoading = true;
+                        });
+                        setState(() {
+                          _isDialogueLoading = true;
+                        });
+                        await deleteFolder(_detailFolder["id"]).then((res) {
+                          setChildState(() {
+                            _isDialogueLoading = false;
+                          });
+                          setState(() {
+                            _isDialogueLoading = false;
+                          });
+                          if (res) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Folder deleted successfully!")));
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Folder deleted failed, please try again!")));
+                          }
+                          Navigator.pop(ctx);
+                          Navigator.pop(context, true);
+                        });
+                      },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _isDialogueLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator()) : Container(),
+                    _isDialogueLoading ? const SizedBox(width: 12) : Container(),
+                    const Text("Confirm"),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Future<void> showDelTopicDialogue(context) async {
+  Future<void> showDelTopicDialogue(topicId) async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          "Delete Folder",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
+      builder: (ctxParent) => StatefulBuilder(builder: (ctx, setChildState) {
+        return AlertDialog(
+          title: const Text(
+            "Remove Topic",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        content: const SizedBox(
-          width: 400,
-          child: Text("Are you sure you want to remove this topic from this folder?"),
-        ),
-        actions: [
-          TextButton(
-            child: const Text(
-              "Cancel",
-              style: TextStyle(
-                color: Color(0xFF76ABAE),
+          content: const SizedBox(
+            width: 400,
+            child: Text("Are you sure you want to remove this topic from this folder?"),
+          ),
+          actions: [
+            TextButton(
+              child: const Text(
+                "Cancel",
+                style: TextStyle(
+                  color: Color(0xFF76ABAE),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              onPressed: _isDialogueLoading
+                  ? null
+                  : () async {
+                      setChildState(() {
+                        _isDialogueLoading = true;
+                      });
+                      setState(() {
+                        _isDialogueLoading = true;
+                      });
+                      List<dynamic> updatedList = (_detailFolder["topics"] as List<dynamic>).map((e) => e["id"]).toList();
+                      updatedList.removeWhere((item) => item == topicId);
+                      await patchFolder(_detailFolder["id"], {
+                        "topics": updatedList,
+                      }).then((res) {
+                        setChildState(() {
+                          _isDialogueLoading = false;
+                        });
+                        setState(() {
+                          _isDialogueLoading = false;
+                        });
+                        if (res) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Topic removed successfully!")));
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Folder removed failed, please try again!")));
+                        }
+                        Navigator.pop(ctx);
+                        fetchData();
+                      });
+                    },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _isDialogueLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator()) : Container(),
+                  _isDialogueLoading ? const SizedBox(width: 12) : Container(),
+                  const Text("Confirm"),
+                ],
               ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          TextButton(
-            child: const Text(
-              "Confirm",
-              style: TextStyle(
-                color: Color(0xFF76ABAE),
-              ),
-            ),
-            onPressed: () {
-              //edit api service goes here
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 
@@ -246,7 +309,7 @@ class _DetailFolderState extends State<DetailFolderView> {
                   controlAffinity: ListTileControlAffinity.trailing,
                   onChanged: (value) {
                     setStateChild(() {
-                      _visibleStatus = value ?? true;
+                      _visibleStatus = value ?? false;
                     });
                     setState(() {
                       _visibleStatus = value ?? false;
@@ -271,7 +334,23 @@ class _DetailFolderState extends State<DetailFolderView> {
           );
         },
       ),
-    );
+    ).then((value) async {
+      setState(() {
+        _isLoading = true;
+      });
+      await patchFolder(_detailFolder["id"], {"status": _visibleStatus ? "public" : "private"}).then((res) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+        if (res) {
+          ScaffoldMessenger.of(context).showSnackBar((const SnackBar(content: Text("Folder visiblity changed!"))));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar((const SnackBar(content: Text("Folder visiblity change failed, please try again!"))));
+        }
+      });
+    });
   }
 
   void showBottomModalSheet() {
@@ -369,136 +448,152 @@ class _DetailFolderState extends State<DetailFolderView> {
           )
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(12.0, 24.0, 12.0, 24.0),
-              decoration: const BoxDecoration(
-                color: Color(0xFF222831),
-              ),
+      body: _isLoading
+          ? const Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [Expanded(child: Center(child: CircularProgressIndicator()))],
+            )
+          : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.white,
-                        radius: 16,
-                        backgroundImage:
-                            _detailFolder["createdBy"]["avatarUrl"] != "" ? NetworkImage(_detailFolder["createdBy"]["avatarUrl"]) : const AssetImage("/images/default-avatar.png") as ImageProvider,
-                      ),
-                      const SizedBox(
-                        width: 8,
-                      ),
-                      Expanded(
-                        child: Text(
-                          _detailFolder["createdBy"]["username"],
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(12.0, 24.0, 12.0, 24.0),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF222831),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: Colors.white,
+                              radius: 16,
+                              backgroundImage: _detailFolder["createdBy"]["avatarUrl"] != null
+                                  ? NetworkImage(_detailFolder["createdBy"]["avatarUrl"])
+                                  : const AssetImage("/images/default-avatar.png") as ImageProvider,
+                            ),
+                            const SizedBox(
+                              width: 8,
+                            ),
+                            Expanded(
+                              child: Text(
+                                _detailFolder["createdBy"]["username"],
+                                style: GoogleFonts.roboto(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              DateFormat('yyyy/MM/dd').format(DateTime.parse(_detailFolder["createdOn"])),
+                              style: GoogleFonts.roboto(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _detailFolder["folderName"],
+                          style: GoogleFonts.roboto(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _detailFolder["description"],
                           style: GoogleFonts.roboto(
                             fontSize: 16,
                             fontWeight: FontWeight.w400,
                             color: Colors.white,
                           ),
                         ),
-                      ),
-                      Text(
-                        _detailFolder["createdOn"],
-                        style: GoogleFonts.roboto(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    _detailFolder["folderName"],
-                    style: GoogleFonts.roboto(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _detailFolder["description"],
-                    style: GoogleFonts.roboto(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.only(left: 12, right: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "${_detailFolder["topics"] != null ? _detailFolder["topics"].length : 0} topic${(_detailFolder["topics"].length > 1 || _detailFolder["topics"].length != null) ? "s" : ""}",
-                    style: GoogleFonts.roboto(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all(const Color(0xFF76ABAE)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.only(left: 12, right: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(
-                          Icons.add,
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 4),
                         Text(
-                          "Add topic",
-                          style: TextStyle(
+                          "${_detailFolder["topics"] != null ? _detailFolder["topics"].length : 0} topic${(_detailFolder["topics"].length > 1 || _detailFolder["topics"].length != null) ? "s" : ""}",
+                          style: GoogleFonts.roboto(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
                         ),
+                        ElevatedButton(
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all(const Color(0xFF76ABAE)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.add,
+                                color: Colors.white,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                "Add topic",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                          onPressed: () async {
+                            if (await Navigator.of(context).pushNamed("/add-topic-to-folder", arguments: {
+                                  "folderId": _detailFolder["id"],
+                                  "topicList": _detailFolder["topics"].map((e) => e["id"]).toList(),
+                                }) ==
+                                true) {
+                              fetchData();
+                            }
+                          },
+                        )
                       ],
                     ),
-                    onPressed: () {},
-                  )
+                  ),
+                  SizedBox(
+                    child: Container(
+                      padding: const EdgeInsets.all(12.0),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _detailFolder["topics"].length,
+                        itemBuilder: (context, index) {
+                          return VocabListWidget(
+                            isDeletable: true,
+                            deleteFunc: (context) {
+                              showDelTopicDialogue(_detailFolder['topics'][index]["id"]);
+                            },
+                            onTap: () {
+                              Navigator.pushNamed(context, '/topic', arguments: {"id": _detailFolder['topics'][index]["id"]});
+                            },
+                            title: _detailFolder["topics"][index]["topicName"],
+                            description: _detailFolder["topics"][index]["description"],
+                            icon: const Icon(Icons.book),
+                            userName: _detailFolder["topics"][index]["createdBy"]["username"],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
-            SizedBox(
-              child: Container(
-                padding: const EdgeInsets.all(12.0),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _detailFolder["topics"].length,
-                  itemBuilder: (context, index) {
-                    return VocabListWidget(
-                      isDeletable: true,
-                      deleteFunc: showDelTopicDialogue,
-                      onTap: () {
-                        Navigator.pushNamed(context, '/topic', arguments: {"id": _detailFolder['topics'][index]["id"]});
-                      },
-                      title: _detailFolder["topics"][index]["topicName"],
-                      description: _detailFolder["topics"][index]["description"],
-                      icon: const Icon(Icons.book),
-                      userName: _detailFolder["topics"][index]["createdBy"]["username"],
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

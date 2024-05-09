@@ -1,5 +1,7 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_final/src/services/folders_services.dart';
+import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_final/src/services/vocab_services.dart';
 import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 import 'package:flutter_final/src/widgets/bottom_navi_widget.dart';
@@ -19,140 +21,149 @@ class _CommunityState extends State<CommunityView> {
   late FlutterTts flutterTts;
 
   bool _isLoading = true;
+  List<Map<String, dynamic>> _folders = [];
+  List<Map<String, dynamic>> _topics = [];
 
-  final List<Map<String, dynamic>> _folders = const [
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "folderName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-  ];
+  // final List<Map<String, dynamic>> _folders = const [
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "folderName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  // ];
 
-  final List<Map<String, dynamic>> _topics = const [
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-    {
-      "id": "1",
-      "topicName": "Test",
-      "description": "test description",
-      "createdBy": {
-        "username": "test",
-        "avatarUrl": "",
-      },
-      "createdOn": "30/03/2023"
-    },
-  ];
+  // final List<Map<String, dynamic>> _topics = const [
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  //   {
+  //     "id": "1",
+  //     "topicName": "Test",
+  //     "description": "test description",
+  //     "createdBy": {
+  //       "username": "test",
+  //       "avatarUrl": "",
+  //     },
+  //     "createdOn": "30/03/2023"
+  //   },
+  // ];
 
-  void fetchApi() async {
+  void fetchData() async {
     List<dynamic> res = await getRandomVocab();
-    setState(() {
-      _randomVocab = res[0]["word"];
-      _randomVocabMeaning = res[0]["definition"];
-      _isLoading = false;
-    });
+    List<Map<String, dynamic>> fetchFolder = await getAllFolder(5);
+    List<Map<String, dynamic>> fetchTopic = await getAllTopic(5);
+
+    if (mounted) {
+      setState(() {
+        _folders = fetchFolder;
+        _topics = fetchTopic;
+        _randomVocab = res[0]["word"];
+        _randomVocabMeaning = res[0]["definition"];
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -160,7 +171,7 @@ class _CommunityState extends State<CommunityView> {
     super.initState();
     flutterTts = FlutterTts();
     _setAwaitOptions();
-    fetchApi();
+    fetchData();
   }
 
   Future<void> _setAwaitOptions() async {
