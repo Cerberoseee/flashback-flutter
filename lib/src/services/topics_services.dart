@@ -11,7 +11,9 @@ FirebaseFirestore firestore = FirebaseFirestore.instance;
 Future<List<Map<String, dynamic>>> getRecentTopic(int limit) async {
   try {
     SharedPreferences pref = await SharedPreferences.getInstance();
-    List<String> recentList = pref.getStringList("recentTopicList") ?? [""];
+    List<String> recentList = pref.getStringList("recentTopicList") ?? [];
+
+    if (recentList.isEmpty) return [];
 
     QuerySnapshot topicQuerySnapshot = await firestore.collection('topics').where(FieldPath.documentId, whereIn: recentList).limit(limit).get();
     QuerySnapshot userQuerySnapshot = await firestore.collection('users').get();
@@ -160,12 +162,69 @@ Future<List<Map<String, dynamic>>> searchTopic(int limit, String term) async {
   }
 }
 
+Future<Map<String, dynamic>?> getTopicDetail(String topicId) async {
+  try {
+    DocumentSnapshot topicDoc = await FirebaseFirestore.instance.collection('topics').doc(topicId).get();
+    QuerySnapshot userQuerySnapshot = await firestore.collection('users').get();
+
+    if (topicDoc.exists) {
+      var topicUser = userQuerySnapshot.docs.firstWhereOrNull((element) => (topicDoc.data() as Map<String, dynamic>)["createdBy"] == element.id)?.data() ?? {};
+      Map<String, dynamic> folderData = topicDoc.data() as Map<String, dynamic>;
+
+      return {
+        'id': topicDoc.id,
+        'topicName': folderData['topicName'],
+        'description': folderData['description'],
+        'createdBy': topicUser,
+        'createdOn': folderData['createdOn'],
+        'vocabularies': folderData['vocabularies'] ?? [],
+        'status': folderData['status'] ?? "",
+      };
+    } else {
+      logger.e('Folder with ID $topicId does not exist');
+      return null;
+    }
+  } catch (e) {
+    Logger().e("Error in fetching folder: $e");
+    return null;
+  }
+}
+
+Future<bool> patchTopic(String topicId, dynamic data) async {
+  try {
+    await FirebaseFirestore.instance.collection('topics').doc(topicId).update(data);
+    return true;
+  } catch (e) {
+    logger.e('Error editting topic: $e');
+    return false;
+  }
+}
+
 Future<bool> deleteTopic(String topicId) async {
   try {
     await FirebaseFirestore.instance.collection('topics').doc(topicId).delete();
     return true;
   } catch (e) {
-    logger.e('Error deleting folder: $e');
+    logger.e('Error deleting topic: $e');
+    return false;
+  }
+}
+
+Future<bool> addTopicToFolder(String topicId, List<String> folderIdList) async {
+  try {
+    if (folderIdList.isEmpty) return true;
+    QuerySnapshot folderQuerySnapshot = await firestore.collection('folders').where(FieldPath.documentId, whereIn: folderIdList).get();
+    if (folderQuerySnapshot.docs.isNotEmpty) {
+      for (var folder in folderQuerySnapshot.docs) {
+        List<dynamic> topicList = (folder.data() as Map<String, dynamic>)["topics"];
+        topicList.add(topicId);
+        topicList = topicList.toSet().toList();
+        folder.reference.update({"topic": topicList});
+      }
+    }
+    return true;
+  } catch (e) {
+    Logger().e("Error add topic to folder: $e");
     return false;
   }
 }

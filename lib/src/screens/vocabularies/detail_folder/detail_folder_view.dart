@@ -93,6 +93,8 @@ class _DetailFolderState extends State<DetailFolderView> {
                           await patchFolder(_detailFolder["id"], {
                             "folderName": _editFolderNameController.text,
                             "description": _editFolderDescController.text,
+                            "folderNameQuery": _editFolderNameController.text.toLowerCase(),
+                            "descriptionQuery": _editFolderDescController.text.toLowerCase(),
                           }).then((res) {
                             setChildState(() {
                               _isDialogueLoading = false;
@@ -473,7 +475,7 @@ class _DetailFolderState extends State<DetailFolderView> {
                               radius: 16,
                               backgroundImage: _detailFolder["createdBy"]["avatarUrl"] != null
                                   ? NetworkImage(_detailFolder["createdBy"]["avatarUrl"])
-                                  : const AssetImage("/images/default-avatar.png") as ImageProvider,
+                                  : const AssetImage("assets/images/default-avatar.png") as ImageProvider,
                             ),
                             const SizedBox(
                               width: 8,
@@ -526,7 +528,7 @@ class _DetailFolderState extends State<DetailFolderView> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "${_detailFolder["topics"] != null ? _detailFolder["topics"].length : 0} topic${(_detailFolder["topics"].length > 1 || _detailFolder["topics"].length != null) ? "s" : ""}",
+                          "${_detailFolder["topics"] != null ? _detailFolder["topics"].length : 0} topic${(_detailFolder["topics"].length > 1 && _detailFolder["topics"].length != null) ? "s" : ""}",
                           style: GoogleFonts.roboto(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -579,8 +581,11 @@ class _DetailFolderState extends State<DetailFolderView> {
                             deleteFunc: (context) {
                               showDelTopicDialogue(_detailFolder['topics'][index]["id"]);
                             },
-                            onTap: () {
-                              Navigator.pushNamed(context, '/topic', arguments: {"id": _detailFolder['topics'][index]["id"]});
+                            onTap: () async {
+                              var res = await Navigator.pushNamed(context, '/topic', arguments: {"id": _detailFolder['topics'][index]["id"]});
+                              if (res != null) {
+                                fetchData();
+                              }
                             },
                             title: _detailFolder["topics"][index]["topicName"],
                             description: _detailFolder["topics"][index]["description"],

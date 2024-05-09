@@ -256,7 +256,7 @@ Future<bool> signInWithFacebook() async {
     switch (result.status) {
       case LoginStatus.success:
         bool hasErr = false;
-        final AuthCredential facebookCredential = FacebookAuthProvider.credential(result.accessToken!.token);
+        final OAuthCredential facebookCredential = FacebookAuthProvider.credential(result.accessToken!.token);
         final cred = await _auth.signInWithCredential(facebookCredential);
 
         if (cred.additionalUserInfo!.isNewUser) {

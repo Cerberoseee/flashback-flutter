@@ -132,7 +132,7 @@ class _LeaderboardState extends State<LeaderboardView> {
                             ),
                             CircleAvatar(
                               radius: 32,
-                              backgroundImage: userList[index]["avatarUrl"] != null ? NetworkImage(userList[index]["avatarUrl"]) : const AssetImage("/images/default-avatar.png") as ImageProvider,
+                              backgroundImage: userList[index]["avatarUrl"] != null ? NetworkImage(userList[index]["avatarUrl"]) : const AssetImage("assets/images/default-avatar.png") as ImageProvider,
                             ),
                           ],
                         ),

@@ -47,255 +47,257 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "LOGIN VIA YOUR ACCOUNT",
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 24),
-        TextFormField(
-          controller: _emailController,
-          decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Enter your username or email',
-              labelStyle: TextStyle(
-                color: Colors.white,
-              )),
-        ),
-        const SizedBox(height: 18),
-        TextFormField(
-          controller: _passwordController,
-          obscureText: _obscureText,
-          decoration: InputDecoration(
-            labelStyle: const TextStyle(
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "LOGIN VIA YOUR ACCOUNT",
+            style: TextStyle(
+              fontSize: 12,
               color: Colors.white,
             ),
-            border: const OutlineInputBorder(),
-            labelText: 'Enter your password',
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscureText ? Icons.visibility : Icons.visibility_off,
+          ),
+          const SizedBox(height: 24),
+          TextFormField(
+            controller: _emailController,
+            decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Enter your username or email',
+                labelStyle: TextStyle(
+                  color: Colors.white,
+                )),
+          ),
+          const SizedBox(height: 18),
+          TextFormField(
+            controller: _passwordController,
+            obscureText: _obscureText,
+            decoration: InputDecoration(
+              labelStyle: const TextStyle(
                 color: Colors.white,
               ),
-              onPressed: () {
-                setState(() {
-                  _obscureText = !_obscureText;
-                });
-              },
+              border: const OutlineInputBorder(),
+              labelText: 'Enter your password',
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : () => _signIn(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF76ABAE),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              padding: const EdgeInsets.all(20),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : () => _signIn(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF76ABAE),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.all(20),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "LOGIN",
+                    style: TextStyle(
+                      color: !_isLoading ? Colors.white : Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.grey,
+                          ),
+                        )
+                      : Container(),
+                ],
+              ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "LOGIN",
+          ),
+          const SizedBox(height: 12),
+          _showVerifyMessage
+              ? Text(
+                  "Please verify your account via your email",
                   style: TextStyle(
-                    color: !_isLoading ? Colors.white : Colors.grey,
-                    fontWeight: FontWeight.bold,
+                    color: Colors.red[400],
+                  ),
+                )
+              : Container(),
+          _wrongLogin
+              ? Text(
+                  "Incorrect username, email or password",
+                  style: TextStyle(
+                    color: Colors.red[400],
+                  ),
+                )
+              : Container(),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, "/forgot-password");
+                },
+                child: const MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Text(
+                    "Forget your password?",
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.w300,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                _isLoading
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          color: Colors.grey,
-                        ),
-                      )
-                    : Container(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, "/verify-mail");
+                },
+                child: const MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Text(
+                    "Verify your email",
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, "/register");
+                },
+                child: const MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: Text(
+                    "Don't have an account?",
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.w300,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 36),
+          const Text(
+            "OR YOU CAN LOGIN VIA",
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            style: ButtonStyle(
+              padding: MaterialStateProperty.all(
+                const EdgeInsets.all(24),
+              ),
+              backgroundColor: MaterialStateProperty.all(
+                const Color.fromARGB(255, 30, 61, 63),
+              ),
+            ),
+            onPressed: () async {
+              await signInWithGoogle().then((value) {
+                if (value) {
+                  Navigator.popAndPushNamed(context, "/home");
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+                }
+              });
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset("assets/images/google_logo.png"),
+                ),
+                const Text(
+                  "GOOGLE ACCOUNT",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
-        ),
-        const SizedBox(height: 12),
-        _showVerifyMessage
-            ? Text(
-                "Please verify your account via your email",
-                style: TextStyle(
-                  color: Colors.red[400],
+          const SizedBox(height: 12),
+          ElevatedButton(
+            style: ButtonStyle(
+              padding: MaterialStateProperty.all(
+                const EdgeInsets.all(24),
+              ),
+              backgroundColor: MaterialStateProperty.all(
+                const Color.fromARGB(255, 30, 61, 63),
+              ),
+            ),
+            onPressed: () async {
+              await signInWithFacebook().then((value) {
+                if (value) {
+                  Navigator.popAndPushNamed(context, "/home");
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+                }
+              });
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Image.asset("assets/images/facebook_logo.png"),
                 ),
-              )
-            : Container(),
-        _wrongLogin
-            ? Text(
-                "Incorrect username, email or password",
-                style: TextStyle(
-                  color: Colors.red[400],
-                ),
-              )
-            : Container(),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            const Spacer(),
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, "/forgot-password");
-              },
-              child: const MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Text(
-                  "Forget your password?",
-                  textAlign: TextAlign.end,
+                const Text(
+                  "FACEBOOK ACCOUNT",
                   style: TextStyle(
-                    fontSize: 16,
                     color: Colors.white,
-                    decoration: TextDecoration.underline,
-                    fontWeight: FontWeight.w300,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            const Spacer(),
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, "/verify-mail");
-              },
-              child: const MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Text(
-                  "Verify your email",
-                  textAlign: TextAlign.end,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    decoration: TextDecoration.underline,
-                    fontWeight: FontWeight.w300,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const Spacer(),
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, "/register");
-              },
-              child: const MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: Text(
-                  "Don't have an account?",
-                  textAlign: TextAlign.end,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    decoration: TextDecoration.underline,
-                    fontWeight: FontWeight.w300,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 36),
-        const Text(
-          "OR YOU CAN LOGIN VIA",
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 24),
-        ElevatedButton(
-          style: ButtonStyle(
-            padding: MaterialStateProperty.all(
-              const EdgeInsets.all(24),
-            ),
-            backgroundColor: MaterialStateProperty.all(
-              const Color.fromARGB(255, 30, 61, 63),
+              ],
             ),
           ),
-          onPressed: () async {
-            await signInWithGoogle().then((value) {
-              if (value) {
-                Navigator.popAndPushNamed(context, "/home");
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
-              }
-            });
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Image.asset("/images/google_logo.png"),
-              ),
-              const Text(
-                "GOOGLE ACCOUNT",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        ElevatedButton(
-          style: ButtonStyle(
-            padding: MaterialStateProperty.all(
-              const EdgeInsets.all(24),
-            ),
-            backgroundColor: MaterialStateProperty.all(
-              const Color.fromARGB(255, 30, 61, 63),
-            ),
-          ),
-          onPressed: () async {
-            await signInWithFacebook().then((value) {
-              if (value) {
-                Navigator.popAndPushNamed(context, "/home");
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
-              }
-            });
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: Image.asset("/images/facebook_logo.png"),
-              ),
-              const Text(
-                "FACEBOOK ACCOUNT",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

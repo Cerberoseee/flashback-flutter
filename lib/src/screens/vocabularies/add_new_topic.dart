@@ -137,7 +137,7 @@ class _AddTopicState extends State<AddTopicView> {
         topicName: _editTopicNameController.text,
         descriptionQuery: _editTopicDescController.text.toLowerCase(),
         topicNameQuery: _editTopicNameController.text.toLowerCase(),
-        vocabulary: _listVocabu.map((e) {
+        vocabularies: _listVocabu.map((e) {
           return {
             "en": e["en"],
             "status": "unfavorite",
@@ -256,7 +256,7 @@ class _AddTopicState extends State<AddTopicView> {
                     ),
                     TextButton(
                       onPressed: () async {
-                        List<dynamic> vocabList = await VocabImportExport.importVocab();
+                        List<dynamic> vocabList = await VocabImportExport.instance!.importVocab();
                         setState(() {
                           _listVocabu.insertAll(0, vocabList.map((e) => {"en": e[0], "vi": e[1]}));
                           _listKey.currentState!.insertAllItems(0, vocabList.length);

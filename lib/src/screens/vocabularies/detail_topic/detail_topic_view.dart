@@ -1,13 +1,14 @@
 import 'dart:io';
-
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/enums.dart';
 import 'package:flutter_final/src/helper/vocab_import_export.dart';
+import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 class DetailTopicView extends StatefulWidget {
   final String id;
@@ -25,7 +26,7 @@ class _DetailTopicState extends State<DetailTopicView> {
   late TextEditingController _editTopicNameController, _editTopicDescController;
 
   late FlutterTts flutterTts;
-  bool _visibleStatus = false;
+  bool _visibleStatus = false, _isLoading = false, _isDialogueLoading = false;
 
   bool get isIOS => !kIsWeb && Platform.isIOS;
   bool get isAndroid => !kIsWeb && Platform.isAndroid;
@@ -42,8 +43,27 @@ class _DetailTopicState extends State<DetailTopicView> {
     _setAwaitOptions();
   }
 
-  void fetchDetailTopic() {
-    _vocabList = _detailTopic["vocabularies"];
+  void fetchDetailTopic() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await getTopicDetail(widget.id).then((res) {
+      if (res != null) {
+        List<Map<String, dynamic>> temp = (res['vocabularies'] as List).map((item) {
+          Map<String, dynamic> res = item;
+          return res;
+        }).toList();
+        setState(() {
+          _isLoading = false;
+          _detailTopic = res;
+          _vocabList = temp;
+          _visibleStatus = res["status"] == "public";
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+        Navigator.pop(context);
+      }
+    });
   }
 
   @override
@@ -65,48 +85,50 @@ class _DetailTopicState extends State<DetailTopicView> {
     }
   }
 
-  final Map<String, dynamic> _detailTopic = {
-    "id": "1",
-    "topicName": "Test Topic",
-    "description": "test description",
-    "createdBy": {
-      "username": "test",
-      "avatarUrl": "",
-    },
-    "createdOn": "30/03/2023",
-    "vocabularies": [
-      {
-        "en": "helo",
-        "vi": "chao",
-        "status": "unfavorite",
-      },
-      {
-        "en": "wassup",
-        "vi": "khoe ko",
-        "status": "favorited",
-      },
-      {
-        "en": "nice",
-        "vi": "ngon",
-        "status": "unfavorite",
-      },
-      {
-        "en": "fine",
-        "vi": "chac la on",
-        "status": "mastered",
-      },
-      {
-        "en": "vip",
-        "vi": "pro",
-        "status": "favorited",
-      },
-      {
-        "en": "ayo",
-        "vi": "e",
-        "status": "mastered",
-      },
-    ]
-  };
+  Map<String, dynamic> _detailTopic = {};
+
+  // final Map<String, dynamic> _detailTopic = {
+  //   "id": "1",
+  //   "topicName": "Test Topic",
+  //   "description": "test description",
+  //   "createdBy": {
+  //     "username": "test",
+  //     "avatarUrl": "",
+  //   },
+  //   "createdOn": "30/03/2023",
+  //   "vocabularies": [
+  //     {
+  //       "en": "helo",
+  //       "vi": "chao",
+  //       "status": "unfavorite",
+  //     },
+  //     {
+  //       "en": "wassup",
+  //       "vi": "khoe ko",
+  //       "status": "favorited",
+  //     },
+  //     {
+  //       "en": "nice",
+  //       "vi": "ngon",
+  //       "status": "unfavorite",
+  //     },
+  //     {
+  //       "en": "fine",
+  //       "vi": "chac la on",
+  //       "status": "mastered",
+  //     },
+  //     {
+  //       "en": "vip",
+  //       "vi": "pro",
+  //       "status": "favorited",
+  //     },
+  //     {
+  //       "en": "ayo",
+  //       "vi": "e",
+  //       "status": "mastered",
+  //     },
+  //   ]
+  // };
 
   Future<void> showVisibleDialogue() async {
     await showDialog(
@@ -171,56 +193,97 @@ class _DetailTopicState extends State<DetailTopicView> {
           );
         },
       ),
-    );
+    ).then((res) async {
+      await patchTopic(_detailTopic["id"], {"status": _visibleStatus ? "public" : "private"}).then((res) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res ? "Topic visibility updated!" : "Something went wrong, please try again!")));
+      });
+    });
   }
 
   Future<void> showEditDialogue() async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          "Edit Folder",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        content: SizedBox(
-          width: 400,
-          child: AddEditWidget(
-            descriptionController: _editTopicDescController,
-            nameController: _editTopicNameController,
-            formKey: _editFormKey,
-          ),
-        ),
-        actions: [
-          TextButton(
-            child: const Text(
-              "Cancel",
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setChildState) {
+          return AlertDialog(
+            title: const Text(
+              "Edit Topic",
               style: TextStyle(
-                color: Color(0xFF76ABAE),
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          TextButton(
-            child: const Text(
-              "Confirm",
-              style: TextStyle(
-                color: Color(0xFF76ABAE),
+            content: SizedBox(
+              width: 400,
+              child: AddEditWidget(
+                descriptionController: _editTopicDescController,
+                nameController: _editTopicNameController,
+                formKey: _editFormKey,
               ),
             ),
-            onPressed: () {
-              if (_editFormKey.currentState!.validate()) {
-                //edit api service goes here
-                Navigator.pop(context);
-                // _editFormKey.currentState.save();
-              }
-            },
-          ),
-        ],
+            actions: [
+              TextButton(
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: Color(0xFF76ABAE),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                },
+              ),
+              TextButton(
+                onPressed: _isDialogueLoading
+                    ? null
+                    : () async {
+                        if (_editFormKey.currentState!.validate()) {
+                          setState(() {
+                            _isDialogueLoading = true;
+                          });
+                          setChildState(() {
+                            _isDialogueLoading = true;
+                          });
+                          await patchTopic(_detailTopic["id"], {
+                            "topicName": _editTopicNameController.text,
+                            "description": _editTopicDescController.text,
+                            "topicNameQuery": _editTopicNameController.text.toLowerCase(),
+                            "descriptionQuery": _editTopicDescController.text.toLowerCase(),
+                          }).then((res) {
+                            setState(() {
+                              _isDialogueLoading = false;
+                            });
+                            setChildState(() {
+                              _isDialogueLoading = false;
+                            });
+                            if (res) {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Topic edited successfully!")));
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Topic edited failed, please try again!")));
+                            }
+                            Navigator.pop(ctx);
+                            fetchDetailTopic();
+                          });
+                          // _editFormKey.currentState.save();
+                        }
+                      },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _isDialogueLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator()) : Container(),
+                    _isDialogueLoading ? const SizedBox(width: 12) : Container(),
+                    const Text(
+                      "Confirm",
+                      style: TextStyle(
+                        color: Color(0xFF76ABAE),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -228,43 +291,74 @@ class _DetailTopicState extends State<DetailTopicView> {
   Future<void> showDelDialogue() async {
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text(
-          "Delete Topic",
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w500,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setChildState) => AlertDialog(
+          title: const Text(
+            "Delete Topic",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        content: const SizedBox(
-          width: 400,
-          child: Text("Are you sure you want to delete this topic?"),
-        ),
-        actions: [
-          TextButton(
-            child: const Text(
-              "Cancel",
-              style: TextStyle(
-                color: Color(0xFF76ABAE),
+          content: const SizedBox(
+            width: 400,
+            child: Text("Are you sure you want to delete this topic?"),
+          ),
+          actions: [
+            TextButton(
+              child: const Text(
+                "Cancel",
+                style: TextStyle(
+                  color: Color(0xFF76ABAE),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            TextButton(
+              onPressed: _isDialogueLoading
+                  ? null
+                  : () async {
+                      setState(() {
+                        _isDialogueLoading = true;
+                      });
+                      setChildState(() {
+                        _isDialogueLoading = true;
+                      });
+                      await deleteTopic(_detailTopic["id"]).then((res) {
+                        setState(() {
+                          _isDialogueLoading = false;
+                        });
+                        setChildState(() {
+                          _isDialogueLoading = false;
+                        });
+                        if (res) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Topic deleted successfully!")));
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Topic deleted failed, please try again!")));
+                        }
+                        Navigator.pop(ctx);
+                        Navigator.pop(context, true);
+                      });
+                      // _editFormKey.currentState.save();
+                    },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _isDialogueLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator()) : Container(),
+                  _isDialogueLoading ? const SizedBox(width: 12) : Container(),
+                  const Text(
+                    "Confirm",
+                    style: TextStyle(
+                      color: Color(0xFF76ABAE),
+                    ),
+                  ),
+                ],
               ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-          TextButton(
-            child: const Text(
-              "Confirm",
-              style: TextStyle(
-                color: Color(0xFF76ABAE),
-              ),
-            ),
-            onPressed: () {
-              //edit api service goes here
-              Navigator.pop(context);
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -272,7 +366,7 @@ class _DetailTopicState extends State<DetailTopicView> {
   void showBottomModalSheet() {
     showModalBottomSheet(
       context: context,
-      builder: (context) {
+      builder: (ctx) {
         return Container(
           padding: const EdgeInsets.all(12.0),
           child: Column(
@@ -288,7 +382,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                     ),
                     title: const Text("Edit"),
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(ctx);
                       showEditDialogue();
                       _editTopicNameController.text = _detailTopic["topicName"] ?? "";
                       _editTopicDescController.text = _detailTopic["description"] ?? "";
@@ -301,7 +395,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                     ),
                     title: const Text("Delete"),
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(ctx);
                       showDelDialogue();
                     },
                   ),
@@ -312,7 +406,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                     ),
                     title: const Text("Show Visibility"),
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(ctx);
                       showVisibleDialogue();
                     },
                   ),
@@ -322,15 +416,16 @@ class _DetailTopicState extends State<DetailTopicView> {
                       color: Colors.white,
                     ),
                     title: const Text("Add to Folder"),
-                    onTap: () {
-                      Navigator.pop(context);
+                    onTap: () async {
+                      Navigator.pop(ctx);
+                      await Navigator.of(context).pushNamed("/add-to-folder", arguments: {"topicId": _detailTopic["id"]});
                     },
                   ),
                 ],
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pop(ctx);
                 },
                 child: const Text(
                   "Cancel",
@@ -364,314 +459,325 @@ class _DetailTopicState extends State<DetailTopicView> {
           )
         ],
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _detailTopic["topicName"],
-                style: GoogleFonts.roboto(
-                  fontSize: 24,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _detailTopic["description"],
-                style: GoogleFonts.roboto(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.white,
-                    radius: 16,
-                    backgroundImage:
-                        _detailTopic["createdBy"]["avatarUrl"] != "" ? NetworkImage(_detailTopic["createdBy"]["avatarUrl"]) : const AssetImage("/images/default-avatar.png") as ImageProvider,
-                  ),
-                  const SizedBox(
-                    width: 8,
-                  ),
-                  Expanded(
-                    child: Text(
-                      _detailTopic["createdBy"]["username"],
+      body: _isLoading
+          ? const Column(
+              mainAxisSize: MainAxisSize.max,
+              children: [Expanded(child: Center(child: CircularProgressIndicator()))],
+            )
+          : SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _detailTopic["topicName"],
+                      style: GoogleFonts.roboto(
+                        fontSize: 24,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _detailTopic["description"],
                       style: GoogleFonts.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
                         color: Colors.white,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    _detailTopic["createdOn"],
-                    style: GoogleFonts.roboto(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  PopupMenuButton(
-                    child: const Icon(
-                      Icons.filter_list_rounded,
-                      color: Colors.white,
-                    ),
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        onTap: () {
-                          setState(() {
-                            _vocabList = _detailTopic["vocabularies"];
-                          });
-                        },
-                        child: const Text("Show all"),
-                      ),
-                      PopupMenuItem(
-                        onTap: () {
-                          setState(() {
-                            _vocabList = (_detailTopic["vocabularies"] as List<Map<String, dynamic>>).where((element) => element["status"] == VocabStatus.favorited.name).toList();
-                          });
-                        },
-                        child: const Text("Show starred only"),
-                      ),
-                      PopupMenuItem(
-                        onTap: () {
-                          setState(() {
-                            _vocabList = (_detailTopic["vocabularies"] as List<Map<String, dynamic>>).where((element) => element["status"] == VocabStatus.mastered.name).toList();
-                          });
-                        },
-                        child: const Text("Show mastered only"),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              CarouselSlider.builder(
-                options: CarouselOptions(
-                  enlargeCenterPage: true,
-                  enableInfiniteScroll: false,
-                  height: MediaQuery.of(context).size.height / 2.5,
-                ),
-                itemCount: _vocabList?.length,
-                itemBuilder: (context, index, pageIndex) => Container(
-                  width: MediaQuery.of(context).size.width,
-                  margin: const EdgeInsets.symmetric(horizontal: 1),
-                  padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF222831),
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                  ),
-                  child: Stack(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _vocabList?[index]["en"],
-                            style: const TextStyle(fontSize: 24.0),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            _vocabList?[index]["vi"],
-                            style: const TextStyle(fontSize: 24.0),
-                          ),
-                        ],
-                      ),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Row(
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                _speak(_vocabList?[index]["en"]);
-                              },
-                              icon: const Icon(Icons.campaign),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: Colors.white,
+                          radius: 16,
+                          backgroundImage:
+                              _detailTopic["createdBy"]["avatarUrl"] != "" ? NetworkImage(_detailTopic["createdBy"]["avatarUrl"]) : const AssetImage("assets/images/default-avatar.png") as ImageProvider,
+                        ),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        Expanded(
+                          child: Text(
+                            _detailTopic["createdBy"]["username"],
+                            style: GoogleFonts.roboto(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white,
                             ),
-                            IconButton(
-                              onPressed: () {
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          DateFormat('yyyy/MM/dd').format(DateTime.parse(_detailTopic["createdOn"])),
+                          style: GoogleFonts.roboto(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        PopupMenuButton(
+                          child: const Icon(
+                            Icons.filter_list_rounded,
+                            color: Colors.white,
+                          ),
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              onTap: () {
                                 setState(() {
-                                  if (_vocabList?[index]["status"] == VocabStatus.favorited.name) {
-                                    _vocabList?[index]["status"] = VocabStatus.unfavorite.name;
-                                  } else {
-                                    _vocabList?[index]["status"] = VocabStatus.favorited.name;
-                                  }
+                                  _vocabList = _detailTopic["vocabularies"];
                                 });
                               },
-                              icon: Icon(_vocabList?[index]["status"] == VocabStatus.favorited.name ? Icons.star : Icons.star_border),
+                              child: const Text("Show all"),
+                            ),
+                            PopupMenuItem(
+                              onTap: () {
+                                setState(() {
+                                  _vocabList = (_detailTopic["vocabularies"] as List<Map<String, dynamic>>).where((element) => element["status"] == VocabStatus.favorited.name).toList();
+                                });
+                              },
+                              child: const Text("Show starred only"),
+                            ),
+                            PopupMenuItem(
+                              onTap: () {
+                                setState(() {
+                                  _vocabList = (_detailTopic["vocabularies"] as List<Map<String, dynamic>>).where((element) => element["status"] == VocabStatus.mastered.name).toList();
+                                });
+                              },
+                              child: const Text("Show mastered only"),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    CarouselSlider.builder(
+                      options: CarouselOptions(
+                        enlargeCenterPage: true,
+                        enableInfiniteScroll: false,
+                        height: MediaQuery.of(context).size.height / 2.5,
+                      ),
+                      itemCount: _vocabList?.length,
+                      itemBuilder: (context, index, pageIndex) => Container(
+                        width: MediaQuery.of(context).size.width,
+                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                        padding: const EdgeInsets.all(24),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF222831),
+                          borderRadius: BorderRadius.all(Radius.circular(12)),
+                        ),
+                        child: Stack(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _vocabList?[index]["en"],
+                                  style: const TextStyle(fontSize: 24.0),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _vocabList?[index]["vi"],
+                                  style: const TextStyle(fontSize: 24.0),
+                                ),
+                              ],
+                            ),
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      _speak(_vocabList?[index]["en"]);
+                                    },
+                                    icon: const Icon(Icons.campaign),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        if (_vocabList?[index]["status"] == VocabStatus.favorited.name) {
+                                          _vocabList?[index]["status"] = VocabStatus.unfavorite.name;
+                                        } else {
+                                          _vocabList?[index]["status"] = VocabStatus.favorited.name;
+                                        }
+                                      });
+                                    },
+                                    icon: Icon(_vocabList?[index]["status"] == VocabStatus.favorited.name ? Icons.star : Icons.star_border),
+                                  )
+                                ],
+                              ),
                             )
                           ],
                         ),
-                      )
-                    ],
-                  ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      "${_vocabList != null ? _vocabList?.length : 0} flashcard${(_vocabList!.length > 1) ? "s" : ""}",
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ListView(
+                      shrinkWrap: true,
+                      children: [
+                        ListTile(
+                          tileColor: const Color(0xFF222831),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          iconColor: Colors.white,
+                          textColor: Colors.white,
+                          leading: const Icon(
+                            Icons.abc,
+                            color: Color(0xFF76ABAE),
+                          ),
+                          title: const Text(
+                            "Edit Collections",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF76ABAE),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/edit-topic',
+                              arguments: {"id": _detailTopic["id"]},
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        ListTile(
+                          tileColor: const Color(0xFF222831),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          iconColor: Colors.white,
+                          textColor: Colors.white,
+                          leading: const Icon(
+                            Icons.menu_book,
+                            color: Color(0xFF76ABAE),
+                          ),
+                          title: const Text(
+                            "Learn by Flashcard",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF76ABAE),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              "/flashcard-vocab",
+                              arguments: {
+                                "vocabList": _vocabList as List<Map<String, dynamic>>,
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        ListTile(
+                          tileColor: const Color(0xFF222831),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          iconColor: Colors.white,
+                          textColor: Colors.white,
+                          leading: const Icon(
+                            Icons.quiz,
+                            color: Color(0xFF76ABAE),
+                          ),
+                          title: const Text(
+                            "Test",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF76ABAE),
+                            ),
+                          ),
+                          onTap: () {
+                            if (_vocabList!.length >= 4) {
+                              Navigator.pushNamed(
+                                context,
+                                "/vocab-test-setup",
+                                arguments: {
+                                  "vocabList": _vocabList as List<Map<String, dynamic>>,
+                                  "lastScore": 0,
+                                },
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please add at least 4 flashcards to use this functionality")));
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        ListTile(
+                          tileColor: const Color(0xFF222831),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          iconColor: Colors.white,
+                          textColor: Colors.white,
+                          leading: const Icon(
+                            Icons.leaderboard,
+                            color: Color(0xFF76ABAE),
+                          ),
+                          title: const Text(
+                            "Leaderboard",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF76ABAE),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              "/topic-leaderboard",
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        ListTile(
+                          tileColor: const Color(0xFF222831),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          iconColor: Colors.white,
+                          textColor: Colors.white,
+                          leading: const Icon(
+                            Icons.share,
+                            color: Color(0xFF76ABAE),
+                          ),
+                          title: const Text(
+                            "Export Vocabularies",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF76ABAE),
+                            ),
+                          ),
+                          onTap: () async {
+                            if (await VocabImportExport.instance!.exportVocab(_detailTopic["vocabularies"], _detailTopic["topicName"])) {}
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              Text(
-                "${_vocabList != null ? _vocabList?.length : 0} flashcard${(_vocabList!.length > 1) ? "s" : ""}",
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ListView(
-                shrinkWrap: true,
-                children: [
-                  ListTile(
-                    tileColor: const Color(0xFF222831),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    iconColor: Colors.white,
-                    textColor: Colors.white,
-                    leading: const Icon(
-                      Icons.abc,
-                      color: Color(0xFF76ABAE),
-                    ),
-                    title: const Text(
-                      "Edit Collections",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF76ABAE),
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        '/edit-topic',
-                        arguments: {"id": _detailTopic["id"]},
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    tileColor: const Color(0xFF222831),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    iconColor: Colors.white,
-                    textColor: Colors.white,
-                    leading: const Icon(
-                      Icons.menu_book,
-                      color: Color(0xFF76ABAE),
-                    ),
-                    title: const Text(
-                      "Learn by Flashcard",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF76ABAE),
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        "/flashcard-vocab",
-                        arguments: {"vocabList": _detailTopic["vocabularies"]},
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    tileColor: const Color(0xFF222831),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    iconColor: Colors.white,
-                    textColor: Colors.white,
-                    leading: const Icon(
-                      Icons.quiz,
-                      color: Color(0xFF76ABAE),
-                    ),
-                    title: const Text(
-                      "Test",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF76ABAE),
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        "/vocab-test-setup",
-                        arguments: {
-                          "vocabList": _detailTopic["vocabularies"],
-                          "lastScore": 0,
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    tileColor: const Color(0xFF222831),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    iconColor: Colors.white,
-                    textColor: Colors.white,
-                    leading: const Icon(
-                      Icons.leaderboard,
-                      color: Color(0xFF76ABAE),
-                    ),
-                    title: const Text(
-                      "Leaderboard",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF76ABAE),
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        "/topic-leaderboard",
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  ListTile(
-                    tileColor: const Color(0xFF222831),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    iconColor: Colors.white,
-                    textColor: Colors.white,
-                    leading: const Icon(
-                      Icons.share,
-                      color: Color(0xFF76ABAE),
-                    ),
-                    title: const Text(
-                      "Export Vocabularies",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF76ABAE),
-                      ),
-                    ),
-                    onTap: () async {
-                      if (await VocabImportExport.exportVocab(_detailTopic["vocabularies"], _detailTopic["topicName"])) {}
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
