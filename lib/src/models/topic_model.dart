@@ -7,7 +7,7 @@ class Topic {
   String descriptionQuery;
   String topicNameQuery;
 
-  List<Map<String, dynamic>>? vocabulary;
+  List<Map<String, dynamic>>? vocabularies;
 
   Topic({
     required this.createdBy,
@@ -17,7 +17,7 @@ class Topic {
     required this.topicName,
     required this.descriptionQuery,
     required this.topicNameQuery,
-    this.vocabulary,
+    this.vocabularies,
   });
 
   Map<String, dynamic> toMap() {
@@ -29,7 +29,7 @@ class Topic {
       'topicName': topicName,
       'descriptionQuery': descriptionQuery,
       'topicNameQuery': topicNameQuery,
-      'vocabulary': vocabulary,
+      'vocabularies': vocabularies,
     };
   }
 
@@ -42,7 +42,7 @@ class Topic {
       topicName: map['topicName'],
       descriptionQuery: map['descriptionQuery'],
       topicNameQuery: map['topicNameQuery'],
-      vocabulary: map['vocabulary'],
+      vocabularies: map['vocabularies'],
     );
   }
 }

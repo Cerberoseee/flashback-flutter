@@ -21,10 +21,13 @@ class RegisterView extends StatelessWidget {
         ),
         backgroundColor: const Color(0xFF222831),
       ),
-      body: Container(
-        padding: const EdgeInsets.all(12),
-        color: const Color(0xFF222831),
-        child: const FormWidget(),
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context).size.height - 80,
+          padding: const EdgeInsets.all(12),
+          color: const Color(0xFF222831),
+          child: const FormWidget(),
+        ),
       ),
     );
   }

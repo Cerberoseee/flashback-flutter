@@ -143,7 +143,7 @@ class _AddTopicFolderState extends State<AddTopicFolderView> {
                                   SizedBox(
                                     width: 128,
                                     height: 128,
-                                    child: Image.asset("/images/topic_empty.png"),
+                                    child: Image.asset("images/topic_empty.png"),
                                   ),
                                   const SizedBox(height: 12),
                                   const Text(
@@ -204,7 +204,7 @@ class _AddTopicFolderState extends State<AddTopicFolderView> {
                                   SizedBox(
                                     width: 128,
                                     height: 128,
-                                    child: Image.asset("/images/topic_empty.png"),
+                                    child: Image.asset("images/topic_empty.png"),
                                   ),
                                   const SizedBox(height: 12),
                                   const Text(
@@ -256,7 +256,7 @@ class _AddTopicFolderState extends State<AddTopicFolderView> {
                                   SizedBox(
                                     width: 128,
                                     height: 128,
-                                    child: Image.asset("/images/topic_empty.png"),
+                                    child: Image.asset("images/topic_empty.png"),
                                   ),
                                   const SizedBox(height: 12),
                                   const Text(

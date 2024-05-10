@@ -72,7 +72,9 @@ Future<List<Map<String, dynamic>>> getUserFolder(String userId, String userEmail
 Future<List<Map<String, dynamic>>> getRecentFolder(int limit) async {
   try {
     SharedPreferences pref = await SharedPreferences.getInstance();
-    List<String> recentList = pref.getStringList("recentFolderList") ?? [""];
+    List<String> recentList = pref.getStringList("recentFolderList") ?? [];
+
+    if (recentList.isEmpty) return [];
 
     QuerySnapshot folderQuerySnapshot = await firestore.collection('folders').where(FieldPath.documentId, whereIn: recentList).limit(limit).get();
     QuerySnapshot userQuerySnapshot = await firestore.collection('users').get();

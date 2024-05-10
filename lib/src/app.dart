@@ -118,8 +118,7 @@ class MyApp extends StatelessWidget {
                       topicList: (routeSettings.arguments as Map)["topicList"],
                     );
                   default:
-                    if (FirebaseAuth.instance.currentUser != null) return const HomeView();
-                    // return AddTopicFolderView();
+                    // if (FirebaseAuth.instance.currentUser != null) return const HomeView();
                     return const LoginView();
                 }
               },

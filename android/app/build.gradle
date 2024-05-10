@@ -26,9 +26,8 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "com.example.flutter_final"
-//    compileSdkVersion flutter.compileSdkVersion
     compileSdkVersion 34
+    namespace "com.example.flutter_final"
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -49,7 +48,7 @@ android {
         applicationId "com.example.flutter_final"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion 21
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
@@ -69,7 +68,11 @@ flutter {
     source '../..'
 }
 
-dependencies {
+repositories {
+    mavenCentral()
+  }
 
+dependencies {
     implementation 'com.android.support:multidex:2.0.1'
+    implementation 'com.facebook.android:facebook-android-sdk:[8,9)' 
 }

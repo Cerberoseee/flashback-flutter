@@ -86,7 +86,7 @@ class _AddToFolderState extends State<AddToFolder> {
                       SizedBox(
                         width: 128,
                         height: 128,
-                        child: Image.asset("/images/folder_empty.png"),
+                        child: Image.asset("images/folder_empty.png"),
                       ),
                       const SizedBox(height: 12),
                       const Text(

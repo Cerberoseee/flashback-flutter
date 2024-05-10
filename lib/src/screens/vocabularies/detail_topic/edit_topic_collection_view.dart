@@ -141,7 +141,7 @@ class _EditTopicViewState extends State<EditTopicView> {
               const SizedBox(height: 20),
               TextButton(
                 onPressed: () async {
-                  List<dynamic> vocabList = await VocabImportExport.importVocab();
+                  List<dynamic> vocabList = await VocabImportExport.instance!.importVocab();
                   setState(() {
                     _listVocabu.insertAll(0, vocabList.map((e) => {"en": e[0], "vi": e[1]}));
                     _listKey.currentState!.insertAllItems(0, vocabList.length);
