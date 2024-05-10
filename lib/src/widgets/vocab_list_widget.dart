@@ -86,7 +86,7 @@ class VocabListWidget extends StatelessWidget {
                             CircleAvatar(
                               backgroundColor: Colors.white,
                               radius: 12, // Image radius
-                              backgroundImage: imgAvatar != "" ? NetworkImage(imgAvatar) : const AssetImage("assets/images/default-avatar.png") as ImageProvider,
+                              backgroundImage: imgAvatar != "" ? NetworkImage(imgAvatar) : const AssetImage("images/default-avatar.png") as ImageProvider,
                             ),
                             const SizedBox(
                               width: 8,

@@ -475,7 +475,7 @@ class _DetailFolderState extends State<DetailFolderView> {
                               radius: 16,
                               backgroundImage: _detailFolder["createdBy"]["avatarUrl"] != null
                                   ? NetworkImage(_detailFolder["createdBy"]["avatarUrl"])
-                                  : const AssetImage("assets/images/default-avatar.png") as ImageProvider,
+                                  : const AssetImage("images/default-avatar.png") as ImageProvider,
                             ),
                             const SizedBox(
                               width: 8,

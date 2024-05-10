@@ -495,7 +495,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                           backgroundColor: Colors.white,
                           radius: 16,
                           backgroundImage:
-                              _detailTopic["createdBy"]["avatarUrl"] != "" ? NetworkImage(_detailTopic["createdBy"]["avatarUrl"]) : const AssetImage("assets/images/default-avatar.png") as ImageProvider,
+                              _detailTopic["createdBy"]["avatarUrl"] != "" ? NetworkImage(_detailTopic["createdBy"]["avatarUrl"]) : const AssetImage("images/default-avatar.png") as ImageProvider,
                         ),
                         const SizedBox(
                           width: 8,
