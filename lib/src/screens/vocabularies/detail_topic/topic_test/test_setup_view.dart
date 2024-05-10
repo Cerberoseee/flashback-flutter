@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class TestSetupView extends StatefulWidget {
   final int? lastScore;
   final List<Map<String, dynamic>> vocabList;
+  final String topicId;
+  final String userId;
 
   static const routeName = '/vocab-test-setup';
 
@@ -13,6 +15,8 @@ class TestSetupView extends StatefulWidget {
     super.key,
     this.lastScore = 10,
     this.vocabList = const [],
+    this.topicId = "",
+    this.userId = "",
   });
 
   @override
@@ -244,6 +248,8 @@ class _TestSetupState extends State<TestSetupView> {
                       "testType": _testType,
                       "answerType": _answerType,
                       "instantAnswer": _instantAnswer,
+                      "topicId": widget.topicId,
+                      "userId": widget.userId,
                     });
                   });
                 },

@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/enums.dart';
+import 'package:flutter_final/src/models/user_topic_score.dart';
+import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_final/src/widgets/test_linear_progress_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -11,6 +13,8 @@ class TestView extends StatefulWidget {
   final TestType testType;
   final AnswerType answerType;
   final bool instantAnswer;
+  final String topicId;
+  final String userId;
 
   static const routeName = '/vocab-test';
 
@@ -20,6 +24,8 @@ class TestView extends StatefulWidget {
     this.instantAnswer = true,
     this.testType = TestType.written,
     this.answerType = AnswerType.word,
+    this.topicId = "",
+    this.userId = "",
   });
 
   @override
@@ -32,10 +38,10 @@ class _TestState extends State<TestView> {
   late DateTime _timeStart, _timeEnd;
   String? _randomTFAns, _currAnswer;
   late List<Map<String, dynamic>> _vocabList = [];
-  bool _isFinished = false, _showAnswer = false, _showNextQuestionBtn = false, _isCurrCorrect = false;
+  bool _isFinished = false, _showAnswer = false, _showNextQuestionBtn = false, _isCurrCorrect = false, _isLoading = false;
   late FocusNode focusNode;
   late List<String> _multipleChoiceList;
-
+  dynamic _userScore;
   late TextEditingController _answerTextField;
 
   @override
@@ -46,7 +52,14 @@ class _TestState extends State<TestView> {
     _vocabList = List<Map<String, dynamic>>.from(widget.vocabList)..shuffle();
     _randomTFAns = _vocabList[Random().nextInt(_vocabList.length)]['en'];
     _multipleChoiceList = shuffleAnswer();
+    fetchData();
     super.initState();
+  }
+
+  void fetchData() async {
+    await getDetailScore(widget.topicId, widget.userId).then((value) {
+      _userScore = value;
+    });
   }
 
   List<String> shuffleAnswer() {
@@ -214,19 +227,89 @@ class _TestState extends State<TestView> {
         _showNextQuestionBtn = false;
       });
     }
+
     setState(() {
       _questionNum += 1;
 
-      _randomTFAns = (widget.answerType == AnswerType.definition) ? _vocabList[Random().nextInt(_vocabList.length)]['vi'] : _vocabList[Random().nextInt(_vocabList.length)]['en'];
-      _multipleChoiceList = shuffleAnswer();
+      if (_questionNum < _vocabList.length - 1) {
+        _randomTFAns = (widget.answerType == AnswerType.definition) ? _vocabList[Random().nextInt(_vocabList.length)]['vi'] : _vocabList[Random().nextInt(_vocabList.length)]['en'];
+        _multipleChoiceList = shuffleAnswer();
+      }
 
-      if (_questionNum == _vocabList.length - 1) {
+      if (_questionNum == _vocabList.length) {
         _isFinished = true;
         _timeEnd = DateTime.now();
         return;
       }
     });
+    if (_questionNum == _vocabList.length) {
+      submitScore();
+      return;
+    }
     FocusScope.of(context).requestFocus(focusNode);
+  }
+
+  Future<void> submitScore() async {
+    setState(() {
+      _isLoading = true;
+    });
+    if (_userScore != null) {
+      if (_userScore["correctAnswer"] < _correctAns) {
+        await patchScore(_userScore['id'], {
+          "correctAnswer": _correctAns,
+          "timeDone": _timeEnd.difference(_timeStart).inSeconds,
+          "attempt": _userScore["attempt"] + 1,
+        }).then((res) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res ? "Score set succesfully!" : "Something when wrong when setting your score")));
+        });
+      } else {
+        if (_userScore["timeDone"] > _timeEnd.difference(_timeStart).inSeconds) {
+          await patchScore(_userScore['id'], {
+            "timeDone": _timeEnd.difference(_timeStart).inSeconds,
+            "attempt": _userScore["attempt"] + 1,
+          }).then((res) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+            }
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res ? "Score set succesfully!" : "Something when wrong when setting your score")));
+          });
+        } else {
+          await patchScore(_userScore['id'], {
+            "attempt": _userScore["attempt"] + 1,
+          }).then((res) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+            }
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res ? "Score set succesfully!" : "Something when wrong when setting your score")));
+          });
+        }
+      }
+    } else {
+      UserTopicScore newScore = UserTopicScore(
+        topicId: widget.topicId,
+        userId: widget.userId,
+        correctAnswer: _correctAns,
+        timeDone: _timeEnd.difference(_timeStart).inSeconds,
+        attempt: 1,
+      );
+      await createScore(newScore).then((res) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res ? "Score set succesfully!" : "Something when wrong when setting your score")));
+      });
+    }
   }
 
   @override
@@ -234,7 +317,7 @@ class _TestState extends State<TestView> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "${_questionNum + 1} / ${_vocabList.length}",
+          "${min(_questionNum + 1, _vocabList.length)} / ${_vocabList.length}",
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -323,168 +406,175 @@ class _TestState extends State<TestView> {
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Your Results",
-                      style: TextStyle(fontSize: 24),
-                    ),
-                    const SizedBox(
-                      height: 12,
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Correct: ${_correctAns.toString()}",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.green[400],
-                              ),
-                            ),
-                            Text(
-                              "Incorrect: ${_wrongAns.toString()}",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                color: Colors.red[400],
-                              ),
-                            ),
-                            Text(
-                              "Time Elapsed: ${(_timeEnd.difference(_timeStart).inMinutes).toString().padLeft(2, '0')}:${(_timeEnd.difference(_timeStart).inSeconds % 60).toString().padLeft(2, '0')}",
-                              style: const TextStyle(
-                                color: Color(0xFF76ABAE),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Stack(
-                          children: [
-                            SizedBox(
-                              width: 64,
-                              height: 64,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 10.0,
-                                value: (_correctAns * 1.0 / _vocabList.length),
-                                backgroundColor: Colors.red[400],
-                                valueColor: const AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 102, 187, 106)),
-                              ),
-                            ),
-                            Positioned(
-                              top: 0,
-                              left: 5,
-                              bottom: 0,
-                              right: 0,
-                              child: Center(
-                                child: Text(
-                                  "${((_correctAns * 1.0 / _vocabList.length) * 100).round()}% ",
-                                  style: GoogleFonts.roboto(
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      "Your Answers",
-                      style: TextStyle(fontSize: 24),
-                    ),
-                    const SizedBox(
-                      height: 12,
-                    ),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _listCard.length,
-                      itemBuilder: (context, index) {
-                        return Card(
-                          margin: const EdgeInsets.only(
-                            top: 12,
-                            bottom: 12,
+                  mainAxisAlignment: _isLoading ? MainAxisAlignment.center : MainAxisAlignment.start,
+                  children: _isLoading
+                      ? [
+                          const Center(
+                            child: CircularProgressIndicator(),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        ]
+                      : [
+                          const Text(
+                            "Your Results",
+                            style: TextStyle(fontSize: 24),
+                          ),
+                          const SizedBox(
+                            height: 12,
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(12),
-                                    topRight: Radius.circular(12),
-                                  ),
-                                  color: _listCard[index]['isCorrect'] ? Colors.green[400] : Colors.red[400],
-                                ),
-                                padding: const EdgeInsets.all(12),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _listCard[index]['isCorrect'] ? Icons.done : Icons.close,
-                                      color: Colors.white,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Correct: ${_correctAns.toString()}",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.green[400],
                                     ),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      _listCard[index]['isCorrect'] ? "Correct" : "Incorrect",
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w500,
+                                  ),
+                                  Text(
+                                    "Incorrect: ${_wrongAns.toString()}",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.red[400],
+                                    ),
+                                  ),
+                                  Text(
+                                    "Time Elapsed: ${(_timeEnd.difference(_timeStart).inMinutes).toString().padLeft(2, '0')}:${(_timeEnd.difference(_timeStart).inSeconds % 60).toString().padLeft(2, '0')}",
+                                    style: const TextStyle(
+                                      color: Color(0xFF76ABAE),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Stack(
+                                children: [
+                                  SizedBox(
+                                    width: 64,
+                                    height: 64,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 10.0,
+                                      value: (_correctAns * 1.0 / _vocabList.length),
+                                      backgroundColor: Colors.red[400],
+                                      valueColor: const AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 102, 187, 106)),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 0,
+                                    left: 5,
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Center(
+                                      child: Text(
+                                        "${((_correctAns * 1.0 / _vocabList.length) * 100).round()}% ",
+                                        style: GoogleFonts.roboto(
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.only(
-                                  left: 12,
-                                  right: 12,
+                                  ),
+                                ],
+                              )
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          const Text(
+                            "Your Answers",
+                            style: TextStyle(fontSize: 24),
+                          ),
+                          const SizedBox(
+                            height: 12,
+                          ),
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _listCard.length,
+                            itemBuilder: (context, index) {
+                              return Card(
+                                margin: const EdgeInsets.only(
                                   top: 12,
+                                  bottom: 12,
                                 ),
-                                child: Text(_listCard[index]['question']),
-                              ),
-                              const SizedBox(height: 12),
-                              !_listCard[index]['isCorrect']
-                                  ? Container(
-                                      padding: const EdgeInsets.only(left: 12, right: 12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          topRight: Radius.circular(12),
+                                        ),
+                                        color: _listCard[index]['isCorrect'] ? Colors.green[400] : Colors.red[400],
+                                      ),
+                                      padding: const EdgeInsets.all(12),
                                       child: Row(
                                         children: [
                                           Icon(
-                                            Icons.close,
-                                            color: Colors.red[400],
+                                            _listCard[index]['isCorrect'] ? Icons.done : Icons.close,
+                                            color: Colors.white,
                                           ),
                                           const SizedBox(width: 12),
-                                          Text(_listCard[index]['answer'].toString()),
+                                          Text(
+                                            _listCard[index]['isCorrect'] ? "Correct" : "Incorrect",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
                                         ],
                                       ),
-                                    )
-                                  : Container(),
-                              Container(
-                                padding: const EdgeInsets.only(
-                                  left: 12,
-                                  right: 12,
-                                  bottom: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.done,
-                                      color: Colors.green[400],
                                     ),
-                                    const SizedBox(width: 12),
-                                    Text(_listCard[index]['correctAnswer'].toString()),
+                                    Container(
+                                      padding: const EdgeInsets.only(
+                                        left: 12,
+                                        right: 12,
+                                        top: 12,
+                                      ),
+                                      child: Text(_listCard[index]['question']),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    !_listCard[index]['isCorrect']
+                                        ? Container(
+                                            padding: const EdgeInsets.only(left: 12, right: 12),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.close,
+                                                  color: Colors.red[400],
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Text(_listCard[index]['answer'].toString()),
+                                              ],
+                                            ),
+                                          )
+                                        : Container(),
+                                    Container(
+                                      padding: const EdgeInsets.only(
+                                        left: 12,
+                                        right: 12,
+                                        bottom: 12,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.done,
+                                            color: Colors.green[400],
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text((_listCard[index]['correctAnswer'] ?? !_listCard[index]['answer']).toString()),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                  ],
+                        ],
                 ),
               ),
             ),

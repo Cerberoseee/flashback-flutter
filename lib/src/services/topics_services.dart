@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter_final/src/models/topic_model.dart';
+import 'package:flutter_final/src/models/user_topic_model.dart';
+import 'package:flutter_final/src/models/user_topic_score.dart';
 import 'package:flutter_final/src/services/user_services.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -210,21 +212,142 @@ Future<bool> deleteTopic(String topicId) async {
   }
 }
 
-Future<bool> addTopicToFolder(String topicId, List<String> folderIdList) async {
+Future<bool> addTopicFolderService(String topicId, List<String> folderIdList) async {
   try {
     if (folderIdList.isEmpty) return true;
     QuerySnapshot folderQuerySnapshot = await firestore.collection('folders').where(FieldPath.documentId, whereIn: folderIdList).get();
     if (folderQuerySnapshot.docs.isNotEmpty) {
       for (var folder in folderQuerySnapshot.docs) {
-        List<dynamic> topicList = (folder.data() as Map<String, dynamic>)["topics"];
+        List<dynamic> topicList = (folder.data() as Map<String, dynamic>)["topics"] ?? [];
         topicList.add(topicId);
         topicList = topicList.toSet().toList();
-        folder.reference.update({"topic": topicList});
+        folder.reference.update({"topics": topicList});
       }
     }
     return true;
   } catch (e) {
     Logger().e("Error add topic to folder: $e");
     return false;
+  }
+}
+
+Future<String?> createTopicUserInfo(TopicUserInfo info) async {
+  try {
+    Map<String, dynamic> infoData = info.toMap();
+    var res = await firestore.collection('user_topic_info').add(infoData);
+    return res.id;
+  } catch (e) {
+    logger.e('Error creating folder: $e');
+    return null;
+  }
+}
+
+Future<dynamic> getTopicUserInfo(String topicId, String userId, List<dynamic> vocabList) async {
+  try {
+    QuerySnapshot infoQuerySnapshot = await firestore.collection('user_topic_info').where('topicId', isEqualTo: topicId).where('userId', isEqualTo: userId).get();
+
+    Map<String, dynamic> infoData;
+
+    if (infoQuerySnapshot.docs.isEmpty) {
+      TopicUserInfo newInfo = TopicUserInfo(
+          topicId: topicId,
+          userId: userId,
+          vocabStatus: vocabList
+              .map((e) => {
+                    "vocabId": e["vocabId"],
+                    "isStarred": false,
+                    "status": "notLearned",
+                  })
+              .toList());
+      var res = await createTopicUserInfo(newInfo);
+      infoData = await FirebaseFirestore.instance.collection('user_topic_info').doc(res).get().then((value) => value.data() as Map<String, dynamic>);
+    } else {
+      DocumentSnapshot infoDoc = infoQuerySnapshot.docs.first;
+      infoData = infoDoc.data() as Map<String, dynamic>;
+    }
+
+    return infoData;
+  } catch (e) {
+    Logger().e("Error get topic user info: $e");
+    return {};
+  }
+}
+
+Future<bool> patchTopicUserInfo(String topicId, String userId, dynamic data) async {
+  try {
+    QuerySnapshot statusDocSnapshot = await FirebaseFirestore.instance.collection('user_topic_info').where("topicId", isEqualTo: topicId).where("userId", isEqualTo: userId).get();
+
+    await statusDocSnapshot.docs.firstOrNull?.reference.update(data);
+    return true;
+  } catch (e) {
+    Logger().e("Error patching status: $e");
+    return false;
+  }
+}
+
+Future<bool> createScore(UserTopicScore score) async {
+  try {
+    Map<String, dynamic> scoreData = score.toMap();
+    await firestore.collection('user_topic_score').add(scoreData);
+    return true;
+  } catch (e) {
+    logger.e('Error creating folder: $e');
+    return false;
+  }
+}
+
+Future<dynamic> getDetailScore(String topicId, String userId) async {
+  try {
+    QuerySnapshot infoQuerySnapshot = await firestore.collection('user_topic_score').where('topicId', isEqualTo: topicId).where('userId', isEqualTo: userId).get();
+
+    Map<String, dynamic> infoData;
+    if (infoQuerySnapshot.docs.isNotEmpty) {
+      DocumentSnapshot infoDoc = infoQuerySnapshot.docs.first;
+      infoData = infoDoc.data() as Map<String, dynamic>;
+      infoData['id'] = infoDoc.id;
+      return infoData;
+    }
+    return null;
+  } catch (e) {
+    logger.e('Error creating folder: $e');
+    return null;
+  }
+}
+
+Future<bool> patchScore(String id, dynamic data) async {
+  try {
+    DocumentSnapshot scoreDoc = await FirebaseFirestore.instance.collection('user_topic_score').doc(id).get();
+    await scoreDoc.reference.update(data);
+    return true;
+  } catch (e) {
+    Logger().e("Error patching score: $e");
+    return false;
+  }
+}
+
+Future<dynamic> getAllScore(String topicId) async {
+  try {
+    QuerySnapshot scoreQuerySnapshot = await firestore.collection('user_topic_score').where('topicId', isEqualTo: topicId).get();
+
+    if (scoreQuerySnapshot.docs.isNotEmpty) {
+      var res = [];
+      QuerySnapshot userQuerySnapshot = await firestore.collection('users').get();
+
+      for (DocumentSnapshot scoreDoc in scoreQuerySnapshot.docs) {
+        var scoreData = scoreDoc.data() as Map<String, dynamic>;
+
+        List<QueryDocumentSnapshot> userData = userQuerySnapshot.docs;
+        var user = userData.firstWhereOrNull((element) => scoreData["userId"] == element.id)?.data() ?? {};
+        scoreData["user"] = user;
+
+        res.add(scoreData);
+      }
+
+      return res;
+    }
+    return [];
+  } catch (e) {
+    logger.e('Error creating folder: $e');
+    return [];
   }
 }

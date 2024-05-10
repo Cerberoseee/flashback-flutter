@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/enums.dart';
@@ -23,6 +24,9 @@ class DetailTopicView extends StatefulWidget {
 class _DetailTopicState extends State<DetailTopicView> {
   final _editFormKey = GlobalKey<FormState>();
   late List<Map<String, dynamic>>? _vocabList;
+  late List<Map<String, dynamic>>? _staticVocabList;
+  late dynamic _userTopicInfo;
+
   late TextEditingController _editTopicNameController, _editTopicDescController;
 
   late FlutterTts flutterTts;
@@ -47,18 +51,39 @@ class _DetailTopicState extends State<DetailTopicView> {
     setState(() {
       _isLoading = true;
     });
-    await getTopicDetail(widget.id).then((res) {
+
+    await getTopicDetail(widget.id).then((res) async {
       if (res != null) {
         List<Map<String, dynamic>> temp = (res['vocabularies'] as List).map((item) {
           Map<String, dynamic> res = item;
           return res;
         }).toList();
-        setState(() {
-          _isLoading = false;
-          _detailTopic = res;
-          _vocabList = temp;
-          _visibleStatus = res["status"] == "public";
-        });
+        if (mounted) {
+          setState(() {
+            _detailTopic = res;
+            _visibleStatus = res["status"] == "public";
+          });
+          await getTopicUserInfo(_detailTopic["id"], FirebaseAuth.instance.currentUser?.uid ?? "", temp).then((infoRes) {
+            List<Map<String, dynamic>> temp2 = (infoRes['vocabStatus'] as List).map((item) {
+              Map<String, dynamic> res = item;
+              return res;
+            }).toList();
+
+            List<Map<String, dynamic>> tempVocab = [
+              for (final item1 in temp)
+                {
+                  ...item1,
+                  ...temp2.firstWhere(((item2) => item1['vocabId'] == item2['vocabId']), orElse: () => {'status': 'notLearned', 'isStarred': false}),
+                },
+            ];
+            setState(() {
+              _vocabList = tempVocab;
+              _staticVocabList = tempVocab;
+              _userTopicInfo = infoRes;
+              _isLoading = false;
+            });
+          });
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
         Navigator.pop(context);
@@ -534,7 +559,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                             PopupMenuItem(
                               onTap: () {
                                 setState(() {
-                                  _vocabList = _detailTopic["vocabularies"];
+                                  _vocabList = _staticVocabList;
                                 });
                               },
                               child: const Text("Show all"),
@@ -542,7 +567,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                             PopupMenuItem(
                               onTap: () {
                                 setState(() {
-                                  _vocabList = (_detailTopic["vocabularies"] as List<Map<String, dynamic>>).where((element) => element["status"] == VocabStatus.favorited.name).toList();
+                                  _vocabList = _staticVocabList?.where((element) => element["isStarred"]).toList();
                                 });
                               },
                               child: const Text("Show starred only"),
@@ -550,11 +575,27 @@ class _DetailTopicState extends State<DetailTopicView> {
                             PopupMenuItem(
                               onTap: () {
                                 setState(() {
-                                  _vocabList = (_detailTopic["vocabularies"] as List<Map<String, dynamic>>).where((element) => element["status"] == VocabStatus.mastered.name).toList();
+                                  _vocabList = _staticVocabList?.where((element) => element["status"] == VocabStatus.notLearned.name).toList();
                                 });
                               },
-                              child: const Text("Show mastered only"),
+                              child: const Text("Show not learned only"),
                             ),
+                            PopupMenuItem(
+                              onTap: () {
+                                setState(() {
+                                  _vocabList = _staticVocabList?.where((element) => element["status"] == VocabStatus.learned.name).toList();
+                                });
+                              },
+                              child: const Text("Show learned only"),
+                            ),
+                            // PopupMenuItem(
+                            //   onTap: () {
+                            //     setState(() {
+                            //       _vocabList = _staticVocabList?.where((element) => element["status"] == VocabStatus.mastered.name).toList();
+                            //     });
+                            //   },
+                            //   child: const Text("Show mastered only"),
+                            // ),
                           ],
                         ),
                       ],
@@ -605,14 +646,10 @@ class _DetailTopicState extends State<DetailTopicView> {
                                   IconButton(
                                     onPressed: () {
                                       setState(() {
-                                        if (_vocabList?[index]["status"] == VocabStatus.favorited.name) {
-                                          _vocabList?[index]["status"] = VocabStatus.unfavorite.name;
-                                        } else {
-                                          _vocabList?[index]["status"] = VocabStatus.favorited.name;
-                                        }
+                                        _vocabList?[index]["isStarred"] = !_vocabList?[index]["isStarred"];
                                       });
                                     },
-                                    icon: Icon(_vocabList?[index]["status"] == VocabStatus.favorited.name ? Icons.star : Icons.star_border),
+                                    icon: Icon(_vocabList?[index]["isStarred"] ? Icons.star : Icons.star_border),
                                   )
                                 ],
                               ),
@@ -633,6 +670,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                     const SizedBox(height: 12),
                     ListView(
                       shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       children: [
                         ListTile(
                           tileColor: const Color(0xFF222831),
@@ -652,12 +690,15 @@ class _DetailTopicState extends State<DetailTopicView> {
                               color: Color(0xFF76ABAE),
                             ),
                           ),
-                          onTap: () {
-                            Navigator.pushNamed(
+                          onTap: () async {
+                            var res = await Navigator.pushNamed(
                               context,
                               '/edit-topic',
-                              arguments: {"id": _detailTopic["id"]},
+                              arguments: {"id": _detailTopic["id"], "vocabList": _staticVocabList},
                             );
+                            if (res == true) {
+                              fetchDetailTopic();
+                            }
                           },
                         ),
                         const SizedBox(height: 12),
@@ -679,14 +720,17 @@ class _DetailTopicState extends State<DetailTopicView> {
                               color: Color(0xFF76ABAE),
                             ),
                           ),
-                          onTap: () {
-                            Navigator.pushNamed(
+                          onTap: () async {
+                            await Navigator.pushNamed(
                               context,
                               "/flashcard-vocab",
                               arguments: {
-                                "vocabList": _vocabList as List<Map<String, dynamic>>,
+                                "vocabList": _staticVocabList as List<Map<String, dynamic>>,
+                                "topicId": _detailTopic["id"],
+                                "userId": FirebaseAuth.instance.currentUser?.uid,
                               },
                             );
+                            fetchDetailTopic();
                           },
                         ),
                         const SizedBox(height: 12),
@@ -709,13 +753,15 @@ class _DetailTopicState extends State<DetailTopicView> {
                             ),
                           ),
                           onTap: () {
-                            if (_vocabList!.length >= 4) {
+                            if (_staticVocabList!.length >= 4) {
                               Navigator.pushNamed(
                                 context,
                                 "/vocab-test-setup",
                                 arguments: {
-                                  "vocabList": _vocabList as List<Map<String, dynamic>>,
-                                  "lastScore": 0,
+                                  "vocabList": _staticVocabList as List<Map<String, dynamic>>,
+                                  "lastScore": _userTopicInfo["lastScore"] ?? 0,
+                                  "userId": FirebaseAuth.instance.currentUser?.uid,
+                                  "topicId": _detailTopic["id"],
                                 },
                               );
                             } else {
@@ -743,10 +789,9 @@ class _DetailTopicState extends State<DetailTopicView> {
                             ),
                           ),
                           onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              "/topic-leaderboard",
-                            );
+                            Navigator.pushNamed(context, "/topic-leaderboard", arguments: {
+                              "topicId": _detailTopic["id"],
+                            });
                           },
                         ),
                         const SizedBox(height: 12),

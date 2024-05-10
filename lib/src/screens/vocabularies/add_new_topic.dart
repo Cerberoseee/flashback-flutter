@@ -7,6 +7,7 @@ import 'package:flutter_final/src/models/topic_model.dart';
 import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:collection/collection.dart';
+import 'package:uuid/uuid.dart';
 
 class AddTopicView extends StatefulWidget {
   const AddTopicView({super.key});
@@ -140,8 +141,8 @@ class _AddTopicState extends State<AddTopicView> {
         vocabularies: _listVocabu.map((e) {
           return {
             "en": e["en"],
-            "status": "unfavorite",
             "vi": e["vi"],
+            "vocabId": const Uuid().v4(),
           };
         }).toList(),
       );

@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flip_card/flip_card_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/enums.dart';
+import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_final/src/widgets/vocab_card.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:logger/logger.dart';
@@ -11,9 +13,10 @@ import 'package:swipe_cards/swipe_cards.dart';
 
 class FlashcardVocabView extends StatefulWidget {
   final List<Map<String, dynamic>> vocabList;
+  final String topicId, userId;
   static const routeName = "/flashcard-vocab";
 
-  const FlashcardVocabView({super.key, required this.vocabList});
+  const FlashcardVocabView({super.key, required this.vocabList, this.topicId = "", this.userId = ""});
 
   @override
   State<StatefulWidget> createState() => _FlashcardVocabState();
@@ -23,8 +26,9 @@ class Vocabulary {
   final String en;
   final String vi;
   String status;
+  bool isStarred;
 
-  Vocabulary({this.en = "", this.vi = "", this.status = "unfavorite"});
+  Vocabulary({this.en = "", this.vi = "", this.status = "notLearned", this.isStarred = false});
 }
 
 class _FlashcardVocabState extends State<FlashcardVocabView> {
@@ -60,20 +64,23 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
       _vocabList.shuffle();
     }
 
-    _swipeItems = _vocabList.map((item) {
+    _swipeItems = _vocabList.mapIndexed((index, item) {
       return SwipeItem(
         content: Vocabulary(
           en: item["en"],
           vi: item["vi"],
           status: item["status"],
+          isStarred: item["isStarred"],
         ),
         likeAction: () {
+          _vocabList[index]["status"] = "learned";
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text("Learned"),
             duration: Duration(milliseconds: 500),
           ));
         },
         nopeAction: () {
+          _vocabList[index]["status"] = "notLearned";
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text("Still Learning"),
             duration: Duration(milliseconds: 500),
@@ -104,14 +111,16 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
       );
     }
 
-    setState(() {
-      _isLoading = false;
-    });
-    Timer(const Duration(milliseconds: 200), () async {
-      if (_isAutoAudio && _cardOrientation == AnswerType.word) {
-        await _speak(_vocabList[0]["en"]);
-      }
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      Timer(const Duration(milliseconds: 200), () async {
+        if (_isAutoAudio && _cardOrientation == AnswerType.word) {
+          await _speak(_vocabList[0]["en"]);
+        }
+      });
+    }
   }
 
   @override
@@ -127,6 +136,21 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
     logger = Logger();
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    updateVocab();
+    flutterTts.stop();
+    super.dispose();
+  }
+
+  void updateVocab() async {
+    await patchTopicUserInfo(widget.topicId, widget.userId, {
+      "vocabStatus": _vocabList.map((e) {
+        return {"vocabId": e["vocabId"], "status": e["status"], "isStarred": false};
+      }).toList(),
+    });
   }
 
   void showSettingModal() {
@@ -303,31 +327,27 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
         );
       },
     ).then((value) async {
-      setState(() {
-        _flipDuration = double.parse(_flipDurationController.text);
-        _swipeDuration = double.parse(_swipeDurationController.text);
-      });
-      await prefs.setBool('vocabIsAutoAudio', _isAutoAudio);
-      await prefs.setDouble('vocabFlipDuration', _flipDuration);
-      await prefs.setDouble('vocabSwipeDuration', _swipeDuration);
-      await prefs.setBool("vocabOrient", _cardOrientation == AnswerType.word);
-      await prefs.setBool("vocabIsShuffle", _isShuffleCards);
+      if (mounted) {
+        setState(() {
+          _flipDuration = double.parse(_flipDurationController.text);
+          _swipeDuration = double.parse(_swipeDurationController.text);
+        });
+        await prefs.setBool('vocabIsAutoAudio', _isAutoAudio);
+        await prefs.setDouble('vocabFlipDuration', _flipDuration);
+        await prefs.setDouble('vocabSwipeDuration', _swipeDuration);
+        await prefs.setBool("vocabOrient", _cardOrientation == AnswerType.word);
+        await prefs.setBool("vocabIsShuffle", _isShuffleCards);
+      }
     }).then((value) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => super.widget));
     });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    flutterTts.stop();
   }
 
   Future<void> _speak(newVoiceText) async {
     await flutterTts.setLanguage('en-US');
 
     if (newVoiceText != null) {
-      if (newVoiceText!.isNotEmpty) {
+      if (newVoiceText!.isNotEmpty && mounted) {
         setState(() {
           _isSpeaking = true;
         });
@@ -377,14 +397,10 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
                         vi: _swipeItems[index].content.vi,
                         en: _swipeItems[index].content.en,
                         isFlipped: _cardOrientation == AnswerType.definition,
-                        isFavorite: (_swipeItems[index].content.status == "favorited"),
+                        isFavorite: (_swipeItems[index].content.isStarred),
                         setFavorite: () {
                           setState(() {
-                            if (_swipeItems[index].content.status == "favorited") {
-                              _swipeItems[index].content.status = "unfavorite";
-                            } else {
-                              _swipeItems[index].content.status = "favorited";
-                            }
+                            _swipeItems[index].content.isStarred = !_swipeItems[index].content.isStarred;
                           });
                         },
                       );

@@ -233,3 +233,14 @@ Future<bool> patchFolder(String folderId, dynamic data) async {
     return false;
   }
 }
+
+Future<List<dynamic>> findFolderHasTopic(String topicId) async {
+  try {
+    QuerySnapshot folderDoc = await FirebaseFirestore.instance.collection('folders').where("topics", arrayContains: topicId).get();
+
+    return folderDoc.docs.map((e) => e.id).toList();
+  } catch (e) {
+    Logger().e("Error finding folders: $e");
+    return [];
+  }
+}

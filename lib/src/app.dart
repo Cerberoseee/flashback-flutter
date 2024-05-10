@@ -89,13 +89,19 @@ class MyApp extends StatelessWidget {
                   case DetailFolderView.routeName:
                     return DetailFolderView(id: (routeSettings.arguments as Map)["id"]);
                   case FlashcardVocabView.routeName:
-                    return FlashcardVocabView(vocabList: (routeSettings.arguments as Map)["vocabList"]);
+                    return FlashcardVocabView(
+                      vocabList: (routeSettings.arguments as Map)["vocabList"],
+                      userId: (routeSettings.arguments as Map)["userId"],
+                      topicId: (routeSettings.arguments as Map)["topicId"],
+                    );
                   case EditTopicView.routeName:
-                    return EditTopicView(id: (routeSettings.arguments as Map)["id"]);
+                    return EditTopicView(id: (routeSettings.arguments as Map)["id"], vocabList: (routeSettings.arguments as Map)["vocabList"]);
                   case TestSetupView.routeName:
                     return TestSetupView(
                       vocabList: (routeSettings.arguments as Map)["vocabList"],
                       lastScore: (routeSettings.arguments as Map)["lastScore"],
+                      userId: (routeSettings.arguments as Map)["userId"],
+                      topicId: (routeSettings.arguments as Map)["topicId"],
                     );
                   case TestView.routeName:
                     return TestView(
@@ -103,11 +109,13 @@ class MyApp extends StatelessWidget {
                       testType: (routeSettings.arguments as Map)["testType"],
                       answerType: (routeSettings.arguments as Map)["answerType"],
                       instantAnswer: (routeSettings.arguments as Map)["instantAnswer"],
+                      userId: (routeSettings.arguments as Map)["userId"],
+                      topicId: (routeSettings.arguments as Map)["topicId"],
                     );
                   case AddTopicView.routeName:
                     return const AddTopicView();
                   case LeaderboardView.routeName:
-                    return const LeaderboardView();
+                    return LeaderboardView(topicId: (routeSettings.arguments as Map)["topicId"]);
                   case CommunitySearchView.routeName:
                     return const CommunitySearchView();
                   case AddToFolder.routeName:
@@ -118,7 +126,7 @@ class MyApp extends StatelessWidget {
                       topicList: (routeSettings.arguments as Map)["topicList"],
                     );
                   default:
-                    // if (FirebaseAuth.instance.currentUser != null) return const HomeView();
+                    if (FirebaseAuth.instance.currentUser != null) return const HomeView();
                     return const LoginView();
                 }
               },

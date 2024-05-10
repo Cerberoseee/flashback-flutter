@@ -1,14 +1,18 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/helper/vocab_import_export.dart';
+import 'package:flutter_final/src/services/topics_services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:uuid/uuid.dart';
 
 class EditTopicView extends StatefulWidget {
   final String id;
+  final List<Map<String, dynamic>> vocabList;
   static const routeName = "/edit-topic";
 
-  const EditTopicView({super.key, this.id = ""});
+  const EditTopicView({super.key, this.id = "", this.vocabList = const []});
 
   @override
   State<EditTopicView> createState() => _EditTopicViewState();
@@ -17,14 +21,71 @@ class EditTopicView extends StatefulWidget {
 class _EditTopicViewState extends State<EditTopicView> {
   final GlobalKey<AnimatedListState> _listKey = GlobalKey();
   final ScrollController _scrollController = ScrollController();
+  bool _isListContainEmpty = false, _isSubmitting = false;
 
-  final List<Map<String, dynamic>> _listVocabu = List.generate(
-    3,
-    (index) => {
-      "en": "",
-      "vi": "",
-    },
-  );
+  @override
+  void initState() {
+    super.initState();
+    _listVocabu = widget.vocabList;
+    _listVocabu.addAll([
+      {
+        "en": "",
+        "vi": "",
+      },
+      {
+        "en": "",
+        "vi": "",
+      },
+      {
+        "en": "",
+        "vi": "",
+      }
+    ]);
+  }
+
+  void submitData() async {
+    bool isValidated = true;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    if (_listVocabu.firstWhereOrNull((element) => (element['vi'] == '' || element['en'] == '' || element['vi'].isEmpty || element['en'].isEmpty)) != null) {
+      setState(() {
+        _isListContainEmpty = true;
+      });
+      isValidated = false;
+    } else {
+      setState(() {
+        _isListContainEmpty = false;
+      });
+    }
+
+    if (isValidated) {
+      await patchTopic(widget.id, {
+        "vocabularies": _listVocabu.map((e) {
+          if (e["vocabId"] == null) {
+            e["vocabId"] = const Uuid().v4();
+          }
+          return e;
+        }).toList()
+      }).then((res) {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res ? "Topic updated successfully!" : "Something went wrong, please try again!")));
+        Navigator.pop(context, true);
+      });
+    } else {
+      setState(() {
+        _isSubmitting = false;
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> _listVocabu = [];
 
   Widget _buildItem(index, animation) {
     return Container(
@@ -126,7 +187,11 @@ class _EditTopicViewState extends State<EditTopicView> {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: _isSubmitting
+                ? null
+                : () {
+                    submitData();
+                  },
             icon: const Icon(Icons.done),
           )
         ],
@@ -163,6 +228,12 @@ class _EditTopicViewState extends State<EditTopicView> {
                   ],
                 ),
               ),
+              _isListContainEmpty
+                  ? Text(
+                      "Please fill in all the card you created, or delete the empty cards!",
+                      style: TextStyle(color: Colors.red[400]),
+                    )
+                  : Container(),
               AnimatedList(
                 key: _listKey,
                 shrinkWrap: true,

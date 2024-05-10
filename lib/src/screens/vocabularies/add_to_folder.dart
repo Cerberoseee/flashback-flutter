@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/folders_services.dart';
-import 'package:logger/logger.dart';
+import 'package:flutter_final/src/services/topics_services.dart';
 
 class AddToFolder extends StatefulWidget {
   final String topicId;
@@ -15,7 +15,7 @@ class AddToFolder extends StatefulWidget {
 }
 
 class _AddToFolderState extends State<AddToFolder> {
-  bool _isLoading = false;
+  bool _isLoading = false, _isSubmitting = false;
 
   List<Map<String, dynamic>> _folders = [];
 
@@ -27,15 +27,13 @@ class _AddToFolderState extends State<AddToFolder> {
       _isLoading = true;
     });
 
+    List<dynamic> fetchTopicFolder = await findFolderHasTopic(widget.topicId);
     List<Map<String, dynamic>> fetchFolder = await getUserFolder(userId, userEmail, 5);
-    // if (fetchFolder.isNotEmpty) {
-    //   fetchFolder.add(fetchFolder[0]);
-    //   fetchFolder.add(fetchFolder[0]);
-    //   fetchFolder.add(fetchFolder[0]);
-    //   fetchFolder.add(fetchFolder[0]);
-    // }
 
     fetchFolder = fetchFolder.map((e) {
+      if (fetchTopicFolder.contains(e["id"])) {
+        return {...e, 'isSelected': true};
+      }
       return {...e, 'isSelected': false};
     }).toList();
 
@@ -47,10 +45,20 @@ class _AddToFolderState extends State<AddToFolder> {
     }
   }
 
-  Future<void> addToFolder() async {
+  void addToFolder(String topicId) async {
     List<dynamic> temp = _folders;
     List<dynamic> selectedFolder = temp.where((element) => element['isSelected']).toList();
-    Logger().i(selectedFolder);
+    List<String> selectedFolderId = selectedFolder.map((e) => e["id"] as String).toList();
+    setState(() {
+      _isSubmitting = true;
+    });
+    await addTopicFolderService(topicId, selectedFolderId).then((res) {
+      if (mounted) {
+        _isSubmitting = false;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res ? "Topic added successfully!" : "Something went wrong, please try again!")));
+      Navigator.pop(context);
+    });
   }
 
   @override
@@ -66,9 +74,11 @@ class _AddToFolderState extends State<AddToFolder> {
         title: const Text("Add to Folder"),
         actions: [
           IconButton(
-            onPressed: () {
-              addToFolder();
-            },
+            onPressed: _isSubmitting
+                ? null
+                : () {
+                    addToFolder(widget.topicId);
+                  },
             icon: const Icon(Icons.done),
           )
         ],
