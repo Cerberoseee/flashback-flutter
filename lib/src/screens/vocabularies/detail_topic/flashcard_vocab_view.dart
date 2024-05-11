@@ -148,7 +148,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
   void updateVocab() async {
     await patchTopicUserInfo(widget.topicId, widget.userId, {
       "vocabStatus": _vocabList.map((e) {
-        return {"vocabId": e["vocabId"], "status": e["status"], "isStarred": false};
+        return {"vocabId": e["vocabId"], "status": e["status"], "isStarred": e["isStarred"]};
       }).toList(),
     });
   }
@@ -402,6 +402,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
                           setState(() {
                             _swipeItems[index].content.isStarred = !_swipeItems[index].content.isStarred;
                           });
+                          _vocabList[index]["isStarred"] = !_vocabList[index]["isStarred"];
                         },
                       );
                     },

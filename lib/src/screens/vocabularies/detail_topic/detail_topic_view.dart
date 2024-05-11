@@ -10,6 +10,7 @@ import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DetailTopicView extends StatefulWidget {
   final String id;
@@ -63,6 +64,12 @@ class _DetailTopicState extends State<DetailTopicView> {
             _detailTopic = res;
             _visibleStatus = res["status"] == "public";
           });
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+
+          List<String> recentTopicId = prefs.getStringList("recentTopicList") ?? [];
+          recentTopicId.add(_detailTopic["id"]);
+          await prefs.setStringList("recentTopicList", recentTopicId.take(5).toList());
+
           await getTopicUserInfo(_detailTopic["id"], FirebaseAuth.instance.currentUser?.uid ?? "", temp).then((infoRes) {
             List<Map<String, dynamic>> temp2 = (infoRes['vocabStatus'] as List).map((item) {
               Map<String, dynamic> res = item;
@@ -91,9 +98,18 @@ class _DetailTopicState extends State<DetailTopicView> {
     });
   }
 
+  Future<void> updateVocab() async {
+    await patchTopicUserInfo(_detailTopic["id"], FirebaseAuth.instance.currentUser!.uid, {
+      "vocabStatus": _staticVocabList?.map((e) {
+        return {"vocabId": e["vocabId"], "status": e["status"], "isStarred": e["isStarred"]};
+      }).toList(),
+    });
+  }
+
   @override
   void dispose() {
     super.dispose();
+    updateVocab();
     flutterTts.stop();
   }
 
@@ -274,7 +290,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                             "description": _editTopicDescController.text,
                             "topicNameQuery": _editTopicNameController.text.toLowerCase(),
                             "descriptionQuery": _editTopicDescController.text.toLowerCase(),
-                          }).then((res) {
+                          }).then((res) async {
                             setState(() {
                               _isDialogueLoading = false;
                             });
@@ -283,6 +299,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                             });
                             if (res) {
                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Topic edited successfully!")));
+                              await updateVocab();
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Topic edited failed, please try again!")));
                             }
@@ -400,41 +417,47 @@ class _DetailTopicState extends State<DetailTopicView> {
               ListView(
                 shrinkWrap: true,
                 children: [
-                  ListTile(
-                    leading: const Icon(
-                      Icons.edit,
-                      color: Colors.white,
-                    ),
-                    title: const Text("Edit"),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      showEditDialogue();
-                      _editTopicNameController.text = _detailTopic["topicName"] ?? "";
-                      _editTopicDescController.text = _detailTopic["description"] ?? "";
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.delete,
-                      color: Colors.white,
-                    ),
-                    title: const Text("Delete"),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      showDelDialogue();
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.language,
-                      color: Colors.white,
-                    ),
-                    title: const Text("Show Visibility"),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      showVisibleDialogue();
-                    },
-                  ),
+                  FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]
+                      ? ListTile(
+                          leading: const Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                          ),
+                          title: const Text("Edit"),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            showEditDialogue();
+                            _editTopicNameController.text = _detailTopic["topicName"] ?? "";
+                            _editTopicDescController.text = _detailTopic["description"] ?? "";
+                          },
+                        )
+                      : Container(),
+                  FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]
+                      ? ListTile(
+                          leading: const Icon(
+                            Icons.delete,
+                            color: Colors.white,
+                          ),
+                          title: const Text("Delete"),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            showDelDialogue();
+                          },
+                        )
+                      : Container(),
+                  FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]
+                      ? ListTile(
+                          leading: const Icon(
+                            Icons.language,
+                            color: Colors.white,
+                          ),
+                          title: const Text("Change Visibility"),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            showVisibleDialogue();
+                          },
+                        )
+                      : Container(),
                   ListTile(
                     leading: const Icon(
                       Icons.folder,
@@ -443,7 +466,9 @@ class _DetailTopicState extends State<DetailTopicView> {
                     title: const Text("Add to Folder"),
                     onTap: () async {
                       Navigator.pop(ctx);
-                      await Navigator.of(context).pushNamed("/add-to-folder", arguments: {"topicId": _detailTopic["id"]});
+                      updateVocab().then((value) {
+                        Navigator.of(context).pushNamed("/add-to-folder", arguments: {"topicId": _detailTopic["id"]});
+                      });
                     },
                   ),
                 ],
@@ -608,53 +633,63 @@ class _DetailTopicState extends State<DetailTopicView> {
                         height: MediaQuery.of(context).size.height / 2.5,
                       ),
                       itemCount: _vocabList?.length,
-                      itemBuilder: (context, index, pageIndex) => Container(
-                        width: MediaQuery.of(context).size.width,
-                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                        padding: const EdgeInsets.all(24),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF222831),
-                          borderRadius: BorderRadius.all(Radius.circular(12)),
-                        ),
-                        child: Stack(
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _vocabList?[index]["en"],
-                                  style: const TextStyle(fontSize: 24.0),
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  _vocabList?[index]["vi"],
-                                  style: const TextStyle(fontSize: 24.0),
-                                ),
-                              ],
-                            ),
-                            Positioned(
-                              top: 0,
-                              right: 0,
-                              child: Row(
+                      itemBuilder: (context, index, pageIndex) => StatefulBuilder(
+                        builder: (ctx, setChildState) => Container(
+                          width: MediaQuery.of(context).size.width,
+                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                          padding: const EdgeInsets.all(24),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF222831),
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                          child: Stack(
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  IconButton(
-                                    onPressed: () {
-                                      _speak(_vocabList?[index]["en"]);
-                                    },
-                                    icon: const Icon(Icons.campaign),
+                                  Text(
+                                    _vocabList?[index]["en"],
+                                    style: const TextStyle(fontSize: 24.0),
                                   ),
-                                  IconButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        _vocabList?[index]["isStarred"] = !_vocabList?[index]["isStarred"];
-                                      });
-                                    },
-                                    icon: Icon(_vocabList?[index]["isStarred"] ? Icons.star : Icons.star_border),
-                                  )
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _vocabList?[index]["vi"],
+                                    style: const TextStyle(fontSize: 24.0),
+                                  ),
                                 ],
                               ),
-                            )
-                          ],
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () {
+                                        _speak(_vocabList?[index]["en"]);
+                                      },
+                                      icon: const Icon(Icons.campaign),
+                                    ),
+                                    IconButton(
+                                      onPressed: () {
+                                        setState(() {
+                                          _vocabList?[index]["isStarred"] = !_vocabList?[index]["isStarred"];
+                                        });
+                                        setChildState(() {
+                                          _vocabList?[index]["isStarred"] = !_vocabList?[index]["isStarred"];
+                                        });
+
+                                        int vocabIndex = _staticVocabList?.indexWhere((element) => element["vocabId"] == _vocabList?[index]["vocabId"]) ?? -1;
+                                        if (vocabIndex != -1) {
+                                          _staticVocabList?[vocabIndex]["isStarred"] = !_staticVocabList?[vocabIndex]["isStarred"];
+                                        }
+                                      },
+                                      icon: Icon(_vocabList?[index]["isStarred"] ? Icons.star : Icons.star_border),
+                                    )
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -672,35 +707,39 @@ class _DetailTopicState extends State<DetailTopicView> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        ListTile(
-                          tileColor: const Color(0xFF222831),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          iconColor: Colors.white,
-                          textColor: Colors.white,
-                          leading: const Icon(
-                            Icons.abc,
-                            color: Color(0xFF76ABAE),
-                          ),
-                          title: const Text(
-                            "Edit Collections",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF76ABAE),
-                            ),
-                          ),
-                          onTap: () async {
-                            var res = await Navigator.pushNamed(
-                              context,
-                              '/edit-topic',
-                              arguments: {"id": _detailTopic["id"], "vocabList": _staticVocabList},
-                            );
-                            if (res == true) {
-                              fetchDetailTopic();
-                            }
-                          },
-                        ),
+                        FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]
+                            ? ListTile(
+                                tileColor: const Color(0xFF222831),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                iconColor: Colors.white,
+                                textColor: Colors.white,
+                                leading: const Icon(
+                                  Icons.abc,
+                                  color: Color(0xFF76ABAE),
+                                ),
+                                title: const Text(
+                                  "Edit Collections",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF76ABAE),
+                                  ),
+                                ),
+                                onTap: () async {
+                                  updateVocab().then((value) async {
+                                    var res = await Navigator.pushNamed(
+                                      context,
+                                      '/edit-topic',
+                                      arguments: {"id": _detailTopic["id"], "vocabList": _staticVocabList},
+                                    );
+                                    if (res == true) {
+                                      fetchDetailTopic();
+                                    }
+                                  });
+                                },
+                              )
+                            : Container(),
                         const SizedBox(height: 12),
                         ListTile(
                           tileColor: const Color(0xFF222831),
@@ -721,16 +760,18 @@ class _DetailTopicState extends State<DetailTopicView> {
                             ),
                           ),
                           onTap: () async {
-                            await Navigator.pushNamed(
-                              context,
-                              "/flashcard-vocab",
-                              arguments: {
-                                "vocabList": _staticVocabList as List<Map<String, dynamic>>,
-                                "topicId": _detailTopic["id"],
-                                "userId": FirebaseAuth.instance.currentUser?.uid,
-                              },
-                            );
-                            fetchDetailTopic();
+                            updateVocab().then((value) async {
+                              await Navigator.pushNamed(
+                                context,
+                                "/flashcard-vocab",
+                                arguments: {
+                                  "vocabList": _staticVocabList as List<Map<String, dynamic>>,
+                                  "topicId": _detailTopic["id"],
+                                  "userId": FirebaseAuth.instance.currentUser?.uid,
+                                },
+                              );
+                              fetchDetailTopic();
+                            });
                           },
                         ),
                         const SizedBox(height: 12),
@@ -753,20 +794,22 @@ class _DetailTopicState extends State<DetailTopicView> {
                             ),
                           ),
                           onTap: () {
-                            if (_staticVocabList!.length >= 4) {
-                              Navigator.pushNamed(
-                                context,
-                                "/vocab-test-setup",
-                                arguments: {
-                                  "vocabList": _staticVocabList as List<Map<String, dynamic>>,
-                                  "lastScore": _userTopicInfo["lastScore"] ?? 0,
-                                  "userId": FirebaseAuth.instance.currentUser?.uid,
-                                  "topicId": _detailTopic["id"],
-                                },
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please add at least 4 flashcards to use this functionality")));
-                            }
+                            updateVocab().then((value) async {
+                              if (_staticVocabList!.length >= 4) {
+                                Navigator.pushNamed(
+                                  context,
+                                  "/vocab-test-setup",
+                                  arguments: {
+                                    "vocabList": _staticVocabList as List<Map<String, dynamic>>,
+                                    "lastScore": _userTopicInfo["lastScore"] ?? 0,
+                                    "userId": FirebaseAuth.instance.currentUser?.uid,
+                                    "topicId": _detailTopic["id"],
+                                  },
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please add at least 4 flashcards to use this functionality")));
+                              }
+                            });
                           },
                         ),
                         const SizedBox(height: 12),
@@ -789,8 +832,10 @@ class _DetailTopicState extends State<DetailTopicView> {
                             ),
                           ),
                           onTap: () {
-                            Navigator.pushNamed(context, "/topic-leaderboard", arguments: {
-                              "topicId": _detailTopic["id"],
+                            updateVocab().then((value) async {
+                              Navigator.pushNamed(context, "/topic-leaderboard", arguments: {
+                                "topicId": _detailTopic["id"],
+                              });
                             });
                           },
                         ),

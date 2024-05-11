@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/folders_services.dart';
 import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
 import 'package:flutter_final/src/widgets/vocab_list_widget.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DetailFolderView extends StatefulWidget {
   final String id;
@@ -35,13 +37,21 @@ class _DetailFolderState extends State<DetailFolderView> {
     setState(() {
       _isLoading = true;
     });
-    await getFolderDetail(widget.id).then((folder) {
+
+    await getFolderDetail(widget.id).then((folder) async {
       if (folder != null) {
         if (mounted) {
           setState(() {
             _detailFolder = folder;
-            _isLoading = false;
             _visibleStatus = folder["status"] == "public";
+          });
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+
+          List<String> recentFolderId = prefs.getStringList("recentFolderList") ?? [];
+          recentFolderId.add(_detailFolder["id"]);
+          await prefs.setStringList("recentFolderList", recentFolderId.take(5).toList());
+          setState(() {
+            _isLoading = false;
           });
         }
       } else {
@@ -439,15 +449,17 @@ class _DetailFolderState extends State<DetailFolderView> {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              showBottomModalSheet();
-            },
-            icon: const Icon(
-              Icons.more_vert,
-              color: Colors.white,
-            ),
-          )
+          FirebaseAuth.instance.currentUser!.uid == _detailFolder["createdBy"]
+              ? IconButton(
+                  onPressed: () {
+                    showBottomModalSheet();
+                  },
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: Colors.white,
+                  ),
+                )
+              : Container(),
         ],
       ),
       body: _isLoading
@@ -535,36 +547,38 @@ class _DetailFolderState extends State<DetailFolderView> {
                             color: Colors.white,
                           ),
                         ),
-                        ElevatedButton(
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(const Color(0xFF76ABAE)),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.add,
-                                color: Colors.white,
-                              ),
-                              SizedBox(width: 4),
-                              Text(
-                                "Add topic",
-                                style: TextStyle(
-                                  color: Colors.white,
+                        FirebaseAuth.instance.currentUser!.uid == _detailFolder["createdBy"]
+                            ? ElevatedButton(
+                                style: ButtonStyle(
+                                  backgroundColor: MaterialStateProperty.all(const Color(0xFF76ABAE)),
                                 ),
-                              ),
-                            ],
-                          ),
-                          onPressed: () async {
-                            if (await Navigator.of(context).pushNamed("/add-topic-to-folder", arguments: {
-                                  "folderId": _detailFolder["id"],
-                                  "topicList": _detailFolder["topics"].map((e) => e["id"]).toList(),
-                                }) ==
-                                true) {
-                              fetchData();
-                            }
-                          },
-                        )
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      "Add topic",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                onPressed: () async {
+                                  if (await Navigator.of(context).pushNamed("/add-topic-to-folder", arguments: {
+                                        "folderId": _detailFolder["id"],
+                                        "topicList": _detailFolder["topics"].map((e) => e["id"]).toList(),
+                                      }) ==
+                                      true) {
+                                    fetchData();
+                                  }
+                                },
+                              )
+                            : Container(),
                       ],
                     ),
                   ),

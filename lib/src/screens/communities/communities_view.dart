@@ -301,6 +301,7 @@ class _CommunityState extends State<CommunityView> {
                           description: _folders[index]["description"],
                           icon: const Icon(Icons.folder),
                           userName: _folders[index]["createdBy"]["username"],
+                          imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
                           isDeletable: false,
                         );
                       },
@@ -332,6 +333,7 @@ class _CommunityState extends State<CommunityView> {
                           description: _topics[index]["description"],
                           icon: const Icon(Icons.book),
                           userName: _topics[index]["createdBy"]["username"],
+                          imgAvatar: _topics[index]["createdBy"]["avatarUrl"],
                           isDeletable: false,
                         );
                       },
