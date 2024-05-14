@@ -254,6 +254,9 @@ class _TestState extends State<TestView> {
       _isLoading = true;
     });
     if (_userScore != null) {
+      await patchTopicUserInfo(widget.topicId, widget.userId, {
+        "lastScore": _correctAns,
+      });
       if (_userScore["correctAnswer"] < _correctAns) {
         await patchScore(_userScore['id'], {
           "correctAnswer": _correctAns,

@@ -173,6 +173,7 @@ Future<Map<String, dynamic>?> getTopicDetail(String topicId) async {
 
     if (topicDoc.exists) {
       var topicUser = userQuerySnapshot.docs.firstWhereOrNull((element) => (topicDoc.data() as Map<String, dynamic>)["createdBy"] == element.id)?.data() ?? {};
+      (topicUser as Map<String, dynamic>)["id"] = (topicDoc.data() as Map<String, dynamic>)["createdBy"];
       Map<String, dynamic> folderData = topicDoc.data() as Map<String, dynamic>;
 
       return {

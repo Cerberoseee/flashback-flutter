@@ -52,13 +52,18 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
 
   void loadPref() async {
     prefs = await SharedPreferences.getInstance();
-    _isAutoAudio = prefs.getBool('vocabIsAutoAudio') ?? true;
-    _isAuto = false;
-    _flipDuration = prefs.getDouble('vocabFlipDuration') ?? 1;
-    _isShuffleCards = prefs.getBool('vocabIsShuffle') ?? false;
-    _swipeDuration = prefs.getDouble('vocabSwipeDuration') ?? 1;
-    _cardOrientation = (prefs.getBool("vocabOrient") ?? true) ? AnswerType.word : AnswerType.definition;
+    _isAutoAudio = prefs.getBool('settingAutoplayAudio') ?? true;
+    _isAuto = prefs.getBool("settingAutoSwipe") ?? false;
+    _flipDuration = prefs.getDouble('settingFlipDuration') ?? 1;
+    _isShuffleCards = prefs.getBool('settingShuffle') ?? false;
+    _swipeDuration = prefs.getDouble('settingSwipeDuration') ?? 1;
+    if (prefs.getString("settingOrientation") != null) {
+      _cardOrientation = AnswerType.values.firstWhere((e) => e.toString() == prefs.getString("settingOrientation"));
+    }
     _vocabList = widget.vocabList;
+
+    _flipDurationController.text = prefs.getDouble("settingFlipDuration")?.toString() ?? "0";
+    _swipeDurationController.text = prefs.getDouble("settingSwipeDuration")?.toString() ?? "0";
 
     if (_isShuffleCards) {
       _vocabList.shuffle();
@@ -141,6 +146,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
   @override
   void dispose() {
     updateVocab();
+    _matchEngine?.dispose();
     flutterTts.stop();
     super.dispose();
   }
@@ -179,7 +185,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
                       SwitchListTile(
                         activeColor: const Color(0xFF76ABAE),
                         value: _isAutoAudio,
-                        onChanged: (value) {
+                        onChanged: (value) async {
                           setStateChild(() {
                             _isAutoAudio = value;
                           });
@@ -192,7 +198,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
                       SwitchListTile(
                         activeColor: const Color(0xFF76ABAE),
                         value: _isShuffleCards,
-                        onChanged: (value) {
+                        onChanged: (value) async {
                           setStateChild(() {
                             _isShuffleCards = value;
                           });
@@ -233,7 +239,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
                                           controlAffinity: ListTileControlAffinity.trailing,
                                           value: AnswerType.definition,
                                           groupValue: _cardOrientation,
-                                          onChanged: (AnswerType? value) {
+                                          onChanged: (AnswerType? value) async {
                                             setStateChildDialogue(() {
                                               _cardOrientation = value!;
                                             });
@@ -251,7 +257,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
                                           controlAffinity: ListTileControlAffinity.trailing,
                                           value: AnswerType.word,
                                           groupValue: _cardOrientation,
-                                          onChanged: (AnswerType? value) {
+                                          onChanged: (AnswerType? value) async {
                                             setStateChildDialogue(() {
                                               _cardOrientation = value!;
                                             });
@@ -332,11 +338,11 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
           _flipDuration = double.parse(_flipDurationController.text);
           _swipeDuration = double.parse(_swipeDurationController.text);
         });
-        await prefs.setBool('vocabIsAutoAudio', _isAutoAudio);
-        await prefs.setDouble('vocabFlipDuration', _flipDuration);
-        await prefs.setDouble('vocabSwipeDuration', _swipeDuration);
-        await prefs.setBool("vocabOrient", _cardOrientation == AnswerType.word);
-        await prefs.setBool("vocabIsShuffle", _isShuffleCards);
+        await prefs.setBool('settingAutoplayAudio', _isAutoAudio);
+        await prefs.setDouble('settingFlipDuration', _flipDuration);
+        await prefs.setDouble('settingSwipeDuration', _swipeDuration);
+        await prefs.setString("settingOrientation", _cardOrientation.toString());
+        await prefs.setBool("settingShuffle", _isShuffleCards);
       }
     }).then((value) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (BuildContext context) => super.widget));

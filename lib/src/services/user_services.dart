@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:flutter_final/src/models/users_model.dart';
 import 'package:path/path.dart' as path;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:logger/logger.dart';
@@ -140,14 +143,15 @@ Future<Map<String, dynamic>?> getCurrentUser(String email) async {
   }
 }
 
-Future<void> uploadImage(File imageFile) async {
+Future<String?> uploadImage(File imageFile) async {
   String fileName = path.basename(imageFile.path);
   Reference storageReference = FirebaseStorage.instance.ref().child('avatars/$fileName');
   UploadTask uploadTask = storageReference.putFile(imageFile);
   await uploadTask.whenComplete(() async {
-    String url = await storageReference.getDownloadURL();
-    logger.e("Upload completed: $url");
+    var url = storageReference.getDownloadURL();
+    logger.i("uploading, $url");
   });
+  return await storageReference.getDownloadURL();
 }
 
 Future<void> signOut() async {
@@ -156,6 +160,25 @@ Future<void> signOut() async {
   } catch (e) {
     print('Error signing out: $e');
   }
+}
+
+Future<String?> uploadImageWeb(PlatformFile image) async {
+  Reference storageReference = FirebaseStorage.instance.ref().child('avatars/${image.name}');
+  if (image.bytes != null) {
+    UploadTask uploadTask = storageReference.putData(
+      image.bytes as Uint8List,
+      SettableMetadata(
+        contentType: 'image/jpeg',
+      ),
+    );
+
+    await uploadTask.whenComplete(() async {
+      var url = storageReference.getDownloadURL();
+      logger.i("uploading, $url");
+    });
+    return await storageReference.getDownloadURL();
+  }
+  return null;
 }
 
 Future<bool> createUser(email, username, password) async {
@@ -287,6 +310,32 @@ Future<bool> signInWithFacebook() async {
     }
   } catch (e) {
     Logger().e('exception->$e');
+    return false;
+  }
+}
+
+Future<bool> patchUser(String uid, dynamic data) async {
+  try {
+    await FirebaseFirestore.instance.collection('users').doc(uid).update(data);
+    return true;
+  } catch (e) {
+    logger.e('Error patching user: $e');
+    return false;
+  }
+}
+
+Future<bool> updatePassword(User currUser, String newPassword, String currPassword) async {
+  try {
+    var credential = EmailAuthProvider.credential(
+      email: currUser.email ?? "",
+      password: currPassword,
+    );
+    var res = await currUser.reauthenticateWithCredential(credential);
+    res.user?.updatePassword(newPassword);
+
+    return true;
+  } catch (e) {
+    logger.e("Error changing password: $e");
     return false;
   }
 }

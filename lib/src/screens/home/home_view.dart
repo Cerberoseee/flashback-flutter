@@ -93,7 +93,7 @@ class _HomeViewState extends State<HomeView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "🎉 Welcome, $userName! 🎉",
+                      "Welcome, $userName! 🎉",
                       style: GoogleFonts.roboto(
                         fontSize: 36,
                         fontWeight: FontWeight.bold,

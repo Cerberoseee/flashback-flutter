@@ -67,6 +67,7 @@ class _DetailTopicState extends State<DetailTopicView> {
           SharedPreferences prefs = await SharedPreferences.getInstance();
 
           List<String> recentTopicId = prefs.getStringList("recentTopicList") ?? [];
+          recentTopicId = recentTopicId.toSet().toList();
           recentTopicId.add(_detailTopic["id"]);
           await prefs.setStringList("recentTopicList", recentTopicId.take(5).toList());
 
@@ -83,12 +84,14 @@ class _DetailTopicState extends State<DetailTopicView> {
                   ...temp2.firstWhere(((item2) => item1['vocabId'] == item2['vocabId']), orElse: () => {'status': 'notLearned', 'isStarred': false}),
                 },
             ];
-            setState(() {
-              _vocabList = tempVocab;
-              _staticVocabList = tempVocab;
-              _userTopicInfo = infoRes;
-              _isLoading = false;
-            });
+            if (mounted) {
+              setState(() {
+                _vocabList = tempVocab;
+                _staticVocabList = tempVocab;
+                _userTopicInfo = infoRes;
+                _isLoading = false;
+              });
+            }
           });
         }
       } else {
@@ -417,7 +420,7 @@ class _DetailTopicState extends State<DetailTopicView> {
               ListView(
                 shrinkWrap: true,
                 children: [
-                  FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]
+                  FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]["id"]
                       ? ListTile(
                           leading: const Icon(
                             Icons.edit,
@@ -432,7 +435,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                           },
                         )
                       : Container(),
-                  FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]
+                  FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]["id"]
                       ? ListTile(
                           leading: const Icon(
                             Icons.delete,
@@ -445,7 +448,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                           },
                         )
                       : Container(),
-                  FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]
+                  FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]["id"]
                       ? ListTile(
                           leading: const Icon(
                             Icons.language,
@@ -707,7 +710,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]
+                        FirebaseAuth.instance.currentUser!.uid == _detailTopic["createdBy"]["id"]
                             ? ListTile(
                                 tileColor: const Color(0xFF222831),
                                 shape: RoundedRectangleBorder(
@@ -760,18 +763,22 @@ class _DetailTopicState extends State<DetailTopicView> {
                             ),
                           ),
                           onTap: () async {
-                            updateVocab().then((value) async {
-                              await Navigator.pushNamed(
-                                context,
-                                "/flashcard-vocab",
-                                arguments: {
-                                  "vocabList": _staticVocabList as List<Map<String, dynamic>>,
-                                  "topicId": _detailTopic["id"],
-                                  "userId": FirebaseAuth.instance.currentUser?.uid,
-                                },
-                              );
-                              fetchDetailTopic();
-                            });
+                            if (_staticVocabList!.length >= 4) {
+                              updateVocab().then((value) async {
+                                await Navigator.pushNamed(
+                                  context,
+                                  "/flashcard-vocab",
+                                  arguments: {
+                                    "vocabList": _staticVocabList as List<Map<String, dynamic>>,
+                                    "topicId": _detailTopic["id"],
+                                    "userId": FirebaseAuth.instance.currentUser?.uid,
+                                  },
+                                );
+                                fetchDetailTopic();
+                              });
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please add at least 4 flashcards to use this functionality")));
+                            }
                           },
                         ),
                         const SizedBox(height: 12),
@@ -796,7 +803,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                           onTap: () {
                             updateVocab().then((value) async {
                               if (_staticVocabList!.length >= 4) {
-                                Navigator.pushNamed(
+                                await Navigator.pushNamed(
                                   context,
                                   "/vocab-test-setup",
                                   arguments: {
@@ -806,6 +813,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                                     "topicId": _detailTopic["id"],
                                   },
                                 );
+                                fetchDetailTopic();
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please add at least 4 flashcards to use this functionality")));
                               }

@@ -112,6 +112,7 @@ Future<Map<String, dynamic>?> getFolderDetail(String folderId) async {
 
     if (folderDoc.exists) {
       var folderUser = userQuerySnapshot.docs.firstWhereOrNull((element) => (folderDoc.data() as Map<String, dynamic>)["createdBy"] == element.id)?.data() ?? {};
+      (folderUser as Map<String, dynamic>)['id'] = (folderDoc.data() as Map<String, dynamic>)["createdBy"];
 
       Map<String, dynamic> folderData = folderDoc.data() as Map<String, dynamic>;
       List<Map<String, dynamic>>? topicsList = [];

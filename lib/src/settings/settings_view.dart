@@ -1,46 +1,45 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/user_services.dart';
+import 'package:flutter_final/src/settings/settings_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_final/src/widgets/app_bar_widget.dart';
 import 'package:flutter_final/src/widgets/bottom_navi_widget.dart';
-
-
-import 'settings_controller.dart';
 
 /// Displays the various settings that can be customized by the user.
 ///
 /// When a user changes a setting, the SettingsController is updated and
 /// Widgets that listen to the SettingsController are rebuilt.
 class SettingsView extends StatefulWidget {
-  SettingsView({super.key, required this.controller});
-
-  static const routeName = '/settings';
+  const SettingsView({super.key, required this.controller});
 
   final SettingsController controller;
+  static const routeName = '/settings';
 
   @override
   State<SettingsView> createState() => _SettingsViewState();
 }
 
 class _SettingsViewState extends State<SettingsView> {
-  late Map<String, dynamic> _currentUser;
-
   String avatarUrl = "";
   String email = "";
   String language = "";
   String userName = "Guest";
-  bool _isLoading = false;
+  String fullName = "";
+  bool _isLoading = false, _isAvatarLoading = false;
 
   final TextEditingController controller = TextEditingController();
 
   @override
   void initState() {
-    // TODO: implement initState
     fetchData();
+    print(FirebaseAuth.instance.currentUser?.providerData);
     super.initState();
   }
 
@@ -49,14 +48,6 @@ class _SettingsViewState extends State<SettingsView> {
     setState(() {
       _isLoading = true;
     });
-    _currentUser = {
-      'avatarUrl': "https://firebasestorage.googleapis.com/v0/b/plashcard2.appspot.com/o/origin.jpg?alt=media&token=d10294c0-e645-49b1-8efd-1afcd9a1b08b",
-      'email': "test@example.com",
-      'language': "Tiếng Việt",
-      'name': "test",
-      "status": "Unblock",
-      "username": "test",
-    };
 
     try {
       String? emailUser = FirebaseAuth.instance.currentUser?.email.toString();
@@ -65,13 +56,13 @@ class _SettingsViewState extends State<SettingsView> {
         if (mounted) {
           setState(() {
             avatarUrl = user['avatarUrl'];
-            userName = user['name'];
+            userName = user['username'];
             email = user['email'];
+            fullName = user['name'];
             _isLoading = false;
           });
         }
       }
-
     } catch (e) {
       logger.e('Error fetching data: $e');
       if (mounted) {
@@ -105,14 +96,48 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
+  bool checkUserProvider() {
+    return FirebaseAuth.instance.currentUser?.providerData.firstWhereOrNull((e) => e.providerId == "google.com" || e.providerId == "facebook.com") != null;
+  }
+
   Future<void> pickImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    dynamic pickedFile;
+    setState(() {
+      _isAvatarLoading = true;
+    });
+    if (kIsWeb) {
+      pickedFile = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ["png, jpeg"],
+        allowMultiple: false,
+      );
+    } else {
+      pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    }
     if (pickedFile != null) {
-      // setState(() {
-      //   imageUrl = '';
-      // });
-      uploadImage(File(pickedFile.path));
+      String url;
+      if (kIsWeb) {
+        url = await uploadImageWeb(pickedFile.files[0]) ?? "";
+      } else {
+        url = await uploadImage(File(pickedFile.path)) ?? "";
+      }
+      if (url != "") {
+        await patchUser(FirebaseAuth.instance.currentUser!.uid, {"avatarUrl": url}).then((res) {
+          if (res && mounted) {
+            fetchData();
+            setState(() {
+              _isAvatarLoading = false;
+            });
+          }
+        });
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isAvatarLoading = false;
+        });
+      }
     }
   }
 
@@ -126,41 +151,59 @@ class _SettingsViewState extends State<SettingsView> {
               padding: const EdgeInsets.all(12),
               child: Column(
                 children: [
-
-                  const SizedBox(height: 20,),
+                  const SizedBox(
+                    height: 20,
+                  ),
 
                   GestureDetector(
-                    onTap: pickImage,
-                    child: CircleAvatar(
-                      backgroundImage: NetworkImage(avatarUrl),
-                      radius: 60,
-                    ),
+                    onTap: _isAvatarLoading ? null : pickImage,
+                    child: _isAvatarLoading
+                        ? Container(
+                            width: 120.0,
+                            height: 120.0,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.grey[400],
+                            ),
+                            child: const CircularProgressIndicator(),
+                          )
+                        : CircleAvatar(
+                            backgroundImage: NetworkImage(avatarUrl),
+                            radius: 60,
+                          ),
                   ),
-                  const SizedBox(height: 12,),
-
-                  InkWell(
-                    child: TextButton(
-                        onPressed: () {},
-                        child: const Text("CHANGE PROFILE", style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold
-                        ),
-                        )),
+                  const SizedBox(
+                    height: 12,
+                  ),
+                  // InkWell(
+                  //   child: TextButton(
+                  //     onPressed: () {},
+                  //     child: const Text(
+                  //       "CHANGE ACCOUNT PROFILE",
+                  //       style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  //     ),
+                  //   ),
+                  // ),
+                  Text(
+                    fullName,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
 
-                  const SizedBox(height: 30,),
+                  const SizedBox(
+                    height: 30,
+                  ),
 
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       "Account",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500),
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
                     ),
                   ),
-                  const SizedBox(height: 8,),
+                  const SizedBox(
+                    height: 8,
+                  ),
                   Container(
                     alignment: Alignment.topLeft,
                     width: double.infinity,
@@ -175,32 +218,24 @@ class _SettingsViewState extends State<SettingsView> {
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           margin: const EdgeInsets.symmetric(vertical: 6),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text("Username", style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
+                                  const Text(
+                                    "Username",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                  ),
-                                  Text(userName, style: const TextStyle(
-                                      fontSize: 16
-                                  ),
+                                  Text(
+                                    userName,
+                                    style: const TextStyle(fontSize: 16),
                                   )
                                 ],
                               ),
-                              InkWell(
-                                child: TextButton(
-                                    onPressed: () {
-                                      _showDialog(context, userName);
-                                    },
-                                    child: const Text("Edit", style: TextStyle(
-                                        fontSize: 18
-                                    ),
-                                    )),
-                              )
                             ],
                           ),
                         ),
@@ -208,75 +243,80 @@ class _SettingsViewState extends State<SettingsView> {
                           height: 1,
                           thickness: 0.5,
                         ),
-
-                         Container(
-                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                           margin: const EdgeInsets.symmetric(vertical: 6),
-                           child: Row(
-                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text("Email", style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(email, style: const TextStyle(
-                                    fontSize: 16
-                                    ),
-                                  )
-                                ],
-                              ),
-                              InkWell(
-                                child: TextButton(
-                                    onPressed: () {
-                                      _showDialog(context, email);
-                                    },
-                                    child: const Text("Edit", style: TextStyle(
-                                        fontSize: 18
-                                      ),
-                                    )),
-                              )
-                            ],
-                           ),
-                         ),
-                        const Divider(
-                          height: 1,
-                          thickness: 0.5,
-                        ),
-
-                        const Divider(
-                          height: 1,
-                          thickness: 0.5,
-                        ),
-
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           margin: const EdgeInsets.symmetric(vertical: 6),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              const Column(
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Change password", style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
+                                  const Text(
+                                    "Email",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                  ),
+                                  Text(
+                                    email,
+                                    style: const TextStyle(fontSize: 16),
+                                  )
                                 ],
                               ),
-                              InkWell(
-                                child: TextButton(
-                                    onPressed: () {},
-                                    child: const Icon(Icons.arrow_forward)),
-                              )
                             ],
                           ),
                         ),
-
+                        const Divider(
+                          height: 1,
+                          thickness: 0.5,
+                        ),
+                        const Divider(
+                          height: 1,
+                          thickness: 0.5,
+                        ),
+                        Material(
+                          child: Ink(
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF222831),
+                              borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12), bottomRight: Radius.circular(12)),
+                            ),
+                            child: InkWell(
+                              onTap: checkUserProvider()
+                                  ? null
+                                  : () {
+                                      Navigator.pushNamed(context, "/change-password");
+                                    },
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Change password",
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                            color: checkUserProvider() ? const Color(0xFFABABAB) : Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward,
+                                      color: checkUserProvider() ? const Color(0xFFABABAB) : Colors.white,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -287,13 +327,12 @@ class _SettingsViewState extends State<SettingsView> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       "App",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500),
+                      style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
                     ),
                   ),
-                  const SizedBox(height: 8,),
+                  const SizedBox(
+                    height: 8,
+                  ),
                   Container(
                     alignment: Alignment.topLeft,
                     width: double.infinity,
@@ -304,86 +343,106 @@ class _SettingsViewState extends State<SettingsView> {
                     ),
                     child: Column(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Settings", style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  ),
-                                ],
+                        Material(
+                          child: Ink(
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF222831),
+                              borderRadius: BorderRadius.all(Radius.circular(12)),
+                            ),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(context, "/detail-settings");
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Settings",
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Icon(Icons.arrow_forward),
+                                  ],
+                                ),
                               ),
-                              InkWell(
-                                child: TextButton(
-                                    onPressed: () {},
-                                    child: const Icon(Icons.arrow_forward)),
-                              )
-                            ],
-                          ),
-                        ),
-                        const Divider(
-                          height: 1,
-                          thickness: 0.5,
-                        ),
-
-                        const Divider(
-                          height: 1,
-                          thickness: 0.5,
-                        ),
-
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("Achievement", style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  ),
-                                ],
-                              ),
-                              InkWell(
-                                child: TextButton(
-                                    onPressed: () {},
-                                    child: const Icon(Icons.arrow_forward)),
-                              )
-                            ],
+                            ),
                           ),
                         ),
 
+                        // const Divider(
+                        //   height: 1,
+                        //   thickness: 0.5,
+                        // ),
+                        // Material(
+                        //   child: Ink(
+                        //     decoration: const BoxDecoration(
+                        //       color: Color(0xFF222831),
+                        //       borderRadius: BorderRadius.only(bottomLeft: Radius.circular(12), bottomRight: Radius.circular(12)),
+                        //     ),
+                        //     child: InkWell(
+                        //       onTap: () {},
+                        //       child: Container(
+                        //         margin: const EdgeInsets.symmetric(vertical: 6),
+                        //         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        //         child: const Row(
+                        //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        //           children: [
+                        //             Column(
+                        //               crossAxisAlignment: CrossAxisAlignment.start,
+                        //               children: [
+                        //                 Text(
+                        //                   "Achievement",
+                        //                   style: TextStyle(
+                        //                     fontSize: 18,
+                        //                     fontWeight: FontWeight.w500,
+                        //                   ),
+                        //                 ),
+                        //               ],
+                        //             ),
+                        //             Icon(Icons.arrow_forward),
+                        //           ],
+                        //         ),
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 30),
 
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: InkWell(
-                      child: TextButton.icon(
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFbA3C3C),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton.icon(
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color(0xFFbA3C3C),
+                            backgroundColor: const Color(0xFF222831),
+                            padding: const EdgeInsets.all(24),
+                          ),
+                          icon: const Icon(Icons.logout),
+                          label: const Text(
+                            'Sign out',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          onPressed: () {
+                            signOut();
+                            Navigator.pushNamedAndRemoveUntil(context, "/login", (route) => false);
+                          },
                         ),
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Sign out', style: TextStyle(
-                          fontSize: 18
-                        ),),
-
-                        onPressed: (){},
                       ),
-                    ),
+                    ],
                   )
 
                   // DropdownButton<ThemeMode>(
@@ -408,7 +467,7 @@ class _SettingsViewState extends State<SettingsView> {
                   // ),
                 ],
               ),
-          ),
+            ),
       bottomNavigationBar: BottomNaviBar(index: 3),
     );
   }

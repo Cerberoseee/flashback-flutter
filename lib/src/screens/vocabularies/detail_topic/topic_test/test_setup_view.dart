@@ -29,9 +29,6 @@ class _TestSetupState extends State<TestSetupView> {
   AnswerType _answerType = AnswerType.word;
   late SharedPreferences prefs;
 
-  var testList = const [TestType.trueFalse, TestType.written, TestType.multiple];
-  var ansList = const [AnswerType.word, AnswerType.definition];
-
   bool _isLoading = true;
 
   @override
@@ -45,9 +42,9 @@ class _TestSetupState extends State<TestSetupView> {
     prefs = await SharedPreferences.getInstance();
 
     setState(() {
-      _instantAnswer = prefs.getBool("testInstantAnswer") ?? false;
-      _testType = testList[prefs.getInt("testTestType") ?? 0];
-      _answerType = ansList[prefs.getInt("testAnsType") ?? 0];
+      _instantAnswer = prefs.getBool("settingInstantAnswer") ?? false;
+      _testType = TestType.values.firstWhere((e) => e.toString() == prefs.getString("settingTestType"));
+      _answerType = AnswerType.values.firstWhere((e) => e.toString() == prefs.getString("settingAnswerType"));
     });
 
     setState(() {
@@ -56,9 +53,9 @@ class _TestSetupState extends State<TestSetupView> {
   }
 
   Future<void> putPref() async {
-    await prefs.setBool("testInstantAnswer", _instantAnswer);
-    await prefs.setInt("testTestType", testList.indexWhere((element) => element == _testType));
-    await prefs.setInt("testAnsType", ansList.indexWhere((element) => element == _answerType));
+    await prefs.setBool("settingInstantAnswer", _instantAnswer);
+    await prefs.setString("settingTestType", _testType.toString());
+    await prefs.setString("settingAnswerType", _answerType.toString());
   }
 
   Future<void> showAnswerTypeBottomSheet() async {
@@ -137,17 +134,17 @@ class _TestSetupState extends State<TestSetupView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        "Vocab topic",
-                        style: TextStyle(
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
+                  // const Row(
+                  //   mainAxisAlignment: MainAxisAlignment.end,
+                  //   children: [
+                  //     Text(
+                  //       "Vocab topic",
+                  //       style: TextStyle(
+                  //         fontSize: 16,
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [

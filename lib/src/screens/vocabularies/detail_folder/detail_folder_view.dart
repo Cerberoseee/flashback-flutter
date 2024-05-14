@@ -48,11 +48,14 @@ class _DetailFolderState extends State<DetailFolderView> {
           SharedPreferences prefs = await SharedPreferences.getInstance();
 
           List<String> recentFolderId = prefs.getStringList("recentFolderList") ?? [];
+          recentFolderId = recentFolderId.toSet().toList();
           recentFolderId.add(_detailFolder["id"]);
           await prefs.setStringList("recentFolderList", recentFolderId.take(5).toList());
-          setState(() {
-            _isLoading = false;
-          });
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
@@ -434,6 +437,7 @@ class _DetailFolderState extends State<DetailFolderView> {
 
   @override
   Widget build(BuildContext context) {
+    print(_detailFolder["createdBy"]);
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: const Color(0xFF222831),
@@ -449,7 +453,7 @@ class _DetailFolderState extends State<DetailFolderView> {
           ),
         ),
         actions: [
-          FirebaseAuth.instance.currentUser!.uid == _detailFolder["createdBy"]
+          !_isLoading && FirebaseAuth.instance.currentUser!.uid == _detailFolder["createdBy"]["id"]
               ? IconButton(
                   onPressed: () {
                     showBottomModalSheet();
@@ -547,7 +551,7 @@ class _DetailFolderState extends State<DetailFolderView> {
                             color: Colors.white,
                           ),
                         ),
-                        FirebaseAuth.instance.currentUser!.uid == _detailFolder["createdBy"]
+                        FirebaseAuth.instance.currentUser!.uid == _detailFolder["createdBy"]["id"]
                             ? ElevatedButton(
                                 style: ButtonStyle(
                                   backgroundColor: MaterialStateProperty.all(const Color(0xFF76ABAE)),

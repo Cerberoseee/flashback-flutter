@@ -238,7 +238,14 @@ class _LoginFormState extends State<LoginForm> {
               onPressed: () async {
                 await signInWithGoogle().then((value) {
                   if (value) {
-                    Navigator.popAndPushNamed(context, "/home");
+                    try {
+                      FirebaseAuth.instance.setPersistence(Persistence.LOCAL).then((value) {
+                        Navigator.popAndPushNamed(context, "/home");
+                      });
+                    } catch (e) {
+                      logger.e("Error setting persistence: $e");
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+                    }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
                   }
@@ -273,9 +280,16 @@ class _LoginFormState extends State<LoginForm> {
                 ),
               ),
               onPressed: () async {
-                await signInWithFacebook().then((value) {
+                await signInWithFacebook().then((value) async {
                   if (value) {
-                    Navigator.popAndPushNamed(context, "/home");
+                    try {
+                      FirebaseAuth.instance.setPersistence(Persistence.LOCAL).then((value) {
+                        Navigator.popAndPushNamed(context, "/home");
+                      });
+                    } catch (e) {
+                      logger.e("Error setting persistence: $e");
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+                    }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
                   }
@@ -338,7 +352,14 @@ class _LoginFormState extends State<LoginForm> {
     if (user != null) {
       if (user.emailVerified) {
         logger.i("User is successfully Log In");
-        Navigator.popAndPushNamed(context, "/home");
+        try {
+          FirebaseAuth.instance.setPersistence(Persistence.LOCAL).then((value) {
+            Navigator.popAndPushNamed(context, "/home");
+          });
+        } catch (e) {
+          logger.e("Error setting persistence: $e");
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
+        }
       } else {
         setState(() {
           _showVerifyMessage = true;

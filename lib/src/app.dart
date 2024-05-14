@@ -19,6 +19,8 @@ import 'package:flutter_final/src/screens/vocabularies/detail_topic/leaderboard_
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/topic_test/test_setup_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/detail_topic/topic_test/test_view.dart';
 import 'package:flutter_final/src/screens/vocabularies/vocabularies_view.dart';
+import 'package:flutter_final/src/settings/detail_settings/detail_settings_view.dart';
+import 'package:flutter_final/src/settings/settings_change_pass.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:logger/logger.dart';
@@ -72,12 +74,11 @@ class MyApp extends StatelessWidget {
             if (routeSettings.name == '/home') return PageRouteBuilder(pageBuilder: (_, __, ___) => const HomeView());
             if (routeSettings.name == '/vocab') return PageRouteBuilder(pageBuilder: (_, __, ___) => const VocabView());
             if (routeSettings.name == '/community') return PageRouteBuilder(pageBuilder: (_, __, ___) => const CommunityView());
+            if (routeSettings.name == SettingsView.routeName) return PageRouteBuilder(pageBuilder: (_, __, ___) => SettingsView(controller: settingsController));
             return MaterialPageRoute<void>(
               settings: routeSettings,
               builder: (BuildContext context) {
                 switch (routeSettings.name) {
-                  case SettingsView.routeName:
-                    return SettingsView(controller: settingsController);
                   case ForgotPasswordView.routeName:
                     return const ForgotPasswordView();
                   case VerifyEmailView.routeName:
@@ -125,6 +126,10 @@ class MyApp extends StatelessWidget {
                       folderId: (routeSettings.arguments as Map)["folderId"],
                       topicList: (routeSettings.arguments as Map)["topicList"],
                     );
+                  case ChangePasswordView.routeName:
+                    return const ChangePasswordView();
+                  case DetailSettingView.routeName:
+                    return const DetailSettingView();
                   default:
                     if (FirebaseAuth.instance.currentUser != null) return const HomeView();
                     return const LoginView();
