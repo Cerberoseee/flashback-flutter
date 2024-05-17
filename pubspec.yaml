@@ -47,6 +47,15 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^2.0.0
+  flutter_launcher_icons: "^0.13.1"
+
+flutter_launcher_icons:
+  image_path: "icon/icon.png"
+  web:
+    generate: true
+    image_path: "icon/icon.png"
+    background_color: "#3D3D3D"
+    theme_color: "#3D3D3D"
 
 flutter:
   uses-material-design: true
