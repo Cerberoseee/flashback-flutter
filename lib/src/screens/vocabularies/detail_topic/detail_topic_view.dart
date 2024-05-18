@@ -547,8 +547,9 @@ class _DetailTopicState extends State<DetailTopicView> {
                         CircleAvatar(
                           backgroundColor: Colors.white,
                           radius: 16,
-                          backgroundImage:
-                              _detailTopic["createdBy"]["avatarUrl"] != "" ? NetworkImage(_detailTopic["createdBy"]["avatarUrl"]) : const AssetImage(kIsWeb ? "images/default-avatar.png" : "assets/images/default-avatar.png") as ImageProvider,
+                          backgroundImage: _detailTopic["createdBy"]["avatarUrl"] != ""
+                              ? NetworkImage(_detailTopic["createdBy"]["avatarUrl"])
+                              : const AssetImage(kIsWeb ? "images/default-avatar.png" : "assets/images/default-avatar.png") as ImageProvider,
                         ),
                         const SizedBox(
                           width: 8,
@@ -650,6 +651,9 @@ class _DetailTopicState extends State<DetailTopicView> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  const SizedBox(
+                                    height: 36,
+                                  ),
                                   Text(
                                     _vocabList?[index]["en"],
                                     style: const TextStyle(fontSize: 24.0),
