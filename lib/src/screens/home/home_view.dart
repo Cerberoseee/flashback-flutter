@@ -171,7 +171,7 @@ class _HomeViewState extends State<HomeView> {
                     CarouselSlider.builder(
                       options: CarouselOptions(
                         enableInfiniteScroll: false,
-                        height: 150,
+                        height: 160,
                         disableCenter: true,
                         padEnds: false,
                       ),
@@ -230,7 +230,7 @@ class _HomeViewState extends State<HomeView> {
                     CarouselSlider.builder(
                       options: CarouselOptions(
                         enableInfiniteScroll: false,
-                        height: 150,
+                        height: 160,
                         disableCenter: true,
                         padEnds: false,
                       ),
