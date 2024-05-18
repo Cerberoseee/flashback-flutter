@@ -185,7 +185,7 @@ class _HomeViewState extends State<HomeView> {
                           description: _folders[index]["description"],
                           icon: const Icon(Icons.folder),
                           userName: _folders[index]["createdBy"]["username"],
-                          imgAvatar: _topics[index]["createdBy"]["avatarUrl"],
+                          imgAvatar: _folders[index]["createdBy"]["avatarUrl"],
                           isDeletable: false,
                         );
                       },

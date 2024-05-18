@@ -169,7 +169,7 @@ class _DetailFolderState extends State<DetailFolderView> {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.pop(context);
+                  Navigator.pop(ctxParent);
                 },
               ),
               TextButton(
@@ -194,7 +194,7 @@ class _DetailFolderState extends State<DetailFolderView> {
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Folder deleted failed, please try again!")));
                           }
-                          Navigator.pop(ctx);
+                          Navigator.pop(ctxParent);
                           Navigator.pop(context, true);
                         });
                       },
@@ -217,73 +217,75 @@ class _DetailFolderState extends State<DetailFolderView> {
   Future<void> showDelTopicDialogue(topicId) async {
     await showDialog(
       context: context,
-      builder: (ctxParent) => StatefulBuilder(builder: (ctx, setChildState) {
-        return AlertDialog(
-          title: const Text(
-            "Remove Topic",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          content: const SizedBox(
-            width: 400,
-            child: Text("Are you sure you want to remove this topic from this folder?"),
-          ),
-          actions: [
-            TextButton(
-              child: const Text(
-                "Cancel",
-                style: TextStyle(
-                  color: Color(0xFF76ABAE),
-                ),
+      builder: (ctxParent) => StatefulBuilder(
+        builder: (ctx, setChildState) {
+          return AlertDialog(
+            title: const Text(
+              "Remove Topic",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
               ),
-              onPressed: () {
-                Navigator.pop(context);
-              },
             ),
-            TextButton(
-              onPressed: _isDialogueLoading
-                  ? null
-                  : () async {
-                      setChildState(() {
-                        _isDialogueLoading = true;
-                      });
-                      setState(() {
-                        _isDialogueLoading = true;
-                      });
-                      List<dynamic> updatedList = (_detailFolder["topics"] as List<dynamic>).map((e) => e["id"]).toList();
-                      updatedList.removeWhere((item) => item == topicId);
-                      await patchFolder(_detailFolder["id"], {
-                        "topics": updatedList,
-                      }).then((res) {
+            content: const SizedBox(
+              width: 400,
+              child: Text("Are you sure you want to remove this topic from this folder?"),
+            ),
+            actions: [
+              TextButton(
+                child: const Text(
+                  "Cancel",
+                  style: TextStyle(
+                    color: Color(0xFF76ABAE),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctxParent);
+                },
+              ),
+              TextButton(
+                onPressed: _isDialogueLoading
+                    ? null
+                    : () async {
                         setChildState(() {
-                          _isDialogueLoading = false;
+                          _isDialogueLoading = true;
                         });
                         setState(() {
-                          _isDialogueLoading = false;
+                          _isDialogueLoading = true;
                         });
-                        if (res) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Topic removed successfully!")));
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Folder removed failed, please try again!")));
-                        }
-                        Navigator.pop(ctx);
-                        fetchData();
-                      });
-                    },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _isDialogueLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator()) : Container(),
-                  _isDialogueLoading ? const SizedBox(width: 12) : Container(),
-                  const Text("Confirm"),
-                ],
+                        List<dynamic> updatedList = (_detailFolder["topics"] as List<dynamic>).map((e) => e["id"]).toList();
+                        updatedList.removeWhere((item) => item == topicId);
+                        await patchFolder(_detailFolder["id"], {
+                          "topics": updatedList,
+                        }).then((res) {
+                          setChildState(() {
+                            _isDialogueLoading = false;
+                          });
+                          setState(() {
+                            _isDialogueLoading = false;
+                          });
+                          if (res) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Topic removed successfully!")));
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Folder removed failed, please try again!")));
+                          }
+                          Navigator.pop(ctxParent);
+                          fetchData();
+                        });
+                      },
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _isDialogueLoading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator()) : Container(),
+                    _isDialogueLoading ? const SizedBox(width: 12) : Container(),
+                    const Text("Confirm"),
+                  ],
+                ),
               ),
-            ),
-          ],
-        );
-      }),
+            ],
+          );
+        },
+      ),
     );
   }
 

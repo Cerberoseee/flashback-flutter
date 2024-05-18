@@ -337,7 +337,7 @@ class _DetailTopicState extends State<DetailTopicView> {
     await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setChildState) => AlertDialog(
+        builder: (childCtx, setChildState) => AlertDialog(
           title: const Text(
             "Delete Topic",
             style: TextStyle(
@@ -358,7 +358,7 @@ class _DetailTopicState extends State<DetailTopicView> {
                 ),
               ),
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(ctx);
               },
             ),
             TextButton(

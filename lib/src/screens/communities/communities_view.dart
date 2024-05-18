@@ -245,6 +245,9 @@ class _CommunityState extends State<CommunityView> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
+                              const SizedBox(
+                                height: 24,
+                              ),
                               Text(
                                 _randomVocab,
                                 style: const TextStyle(
