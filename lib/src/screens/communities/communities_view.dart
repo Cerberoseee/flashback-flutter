@@ -287,7 +287,7 @@ class _CommunityState extends State<CommunityView> {
                     CarouselSlider.builder(
                       options: CarouselOptions(
                         enableInfiniteScroll: false,
-                        height: 150,
+                        height: 160,
                         disableCenter: true,
                         padEnds: false,
                       ),
@@ -319,7 +319,7 @@ class _CommunityState extends State<CommunityView> {
                     CarouselSlider.builder(
                       options: CarouselOptions(
                         enableInfiniteScroll: false,
-                        height: 150,
+                        height: 160,
                         disableCenter: true,
                         padEnds: false,
                       ),
