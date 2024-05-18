@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/user_services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -239,9 +240,13 @@ class _LoginFormState extends State<LoginForm> {
                 await signInWithGoogle().then((value) {
                   if (value) {
                     try {
-                      FirebaseAuth.instance.setPersistence(Persistence.LOCAL).then((value) {
+                      if (kIsWeb) {
+                        FirebaseAuth.instance.setPersistence(Persistence.LOCAL).then((value) {
+                          Navigator.popAndPushNamed(context, "/home");
+                        });
+                      } else {
                         Navigator.popAndPushNamed(context, "/home");
-                      });
+                      }
                     } catch (e) {
                       logger.e("Error setting persistence: $e");
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
@@ -257,7 +262,7 @@ class _LoginFormState extends State<LoginForm> {
                   SizedBox(
                     width: 24,
                     height: 24,
-                    child: Image.asset("images/google_logo.png"),
+                    child: Image.asset(kIsWeb ? "images/google_logo.png" : "assets/images/google_logo.png"),
                   ),
                   const Text(
                     "GOOGLE ACCOUNT",
@@ -283,9 +288,13 @@ class _LoginFormState extends State<LoginForm> {
                 await signInWithFacebook().then((value) async {
                   if (value) {
                     try {
-                      FirebaseAuth.instance.setPersistence(Persistence.LOCAL).then((value) {
+                      if (kIsWeb) {
+                        FirebaseAuth.instance.setPersistence(Persistence.LOCAL).then((value) {
+                          Navigator.popAndPushNamed(context, "/home");
+                        });
+                      } else {
                         Navigator.popAndPushNamed(context, "/home");
-                      });
+                      }
                     } catch (e) {
                       logger.e("Error setting persistence: $e");
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));
@@ -301,7 +310,7 @@ class _LoginFormState extends State<LoginForm> {
                   SizedBox(
                     width: 24,
                     height: 24,
-                    child: Image.asset("images/facebook_logo.png"),
+                    child: Image.asset(kIsWeb ? "images/facebook_logo.png" : "assets/images/facebook_logo.png"),
                   ),
                   const Text(
                     "FACEBOOK ACCOUNT",
@@ -353,9 +362,13 @@ class _LoginFormState extends State<LoginForm> {
       if (user.emailVerified) {
         logger.i("User is successfully Log In");
         try {
-          FirebaseAuth.instance.setPersistence(Persistence.LOCAL).then((value) {
+          if (kIsWeb) {
+            FirebaseAuth.instance.setPersistence(Persistence.LOCAL).then((value) {
+              Navigator.popAndPushNamed(context, "/home");
+            });
+          } else {
             Navigator.popAndPushNamed(context, "/home");
-          });
+          }
         } catch (e) {
           logger.e("Error setting persistence: $e");
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Something went wrong, please try again!")));

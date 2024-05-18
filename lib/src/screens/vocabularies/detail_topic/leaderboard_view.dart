@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/topics_services.dart';
 
@@ -161,7 +162,7 @@ class _LeaderboardState extends State<LeaderboardView> {
                                     radius: 32,
                                     backgroundImage: userList[index]["user"]["avatarUrl"] != null
                                         ? NetworkImage(userList[index]["user"]["avatarUrl"])
-                                        : const AssetImage("images/default-avatar.png") as ImageProvider,
+                                        : const AssetImage(kIsWeb ? "images/default-avatar.png" : "assets/images/default-avatar.png") as ImageProvider,
                                   ),
                                 ],
                               ),
