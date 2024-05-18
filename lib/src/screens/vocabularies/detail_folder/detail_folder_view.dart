@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/folders_services.dart';
 import 'package:flutter_final/src/widgets/add_edit_dialogue.dart';
@@ -491,7 +492,7 @@ class _DetailFolderState extends State<DetailFolderView> {
                               radius: 16,
                               backgroundImage: _detailFolder["createdBy"]["avatarUrl"] != null
                                   ? NetworkImage(_detailFolder["createdBy"]["avatarUrl"])
-                                  : const AssetImage("images/default-avatar.png") as ImageProvider,
+                                  : const AssetImage(kIsWeb ? "images/default-avatar.png" : "assets/images/topic_empty.png") as ImageProvider,
                             ),
                             const SizedBox(
                               width: 8,

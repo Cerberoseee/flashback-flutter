@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/folders_services.dart';
 import 'package:flutter_final/src/services/topics_services.dart';
@@ -96,7 +97,7 @@ class _AddToFolderState extends State<AddToFolder> {
                       SizedBox(
                         width: 128,
                         height: 128,
-                        child: Image.asset("images/folder_empty.png"),
+                        child: Image.asset(kIsWeb ? "images/folder_empty.png": "assets/images/folder_empty.png"),
                       ),
                       const SizedBox(height: 12),
                       const Text(

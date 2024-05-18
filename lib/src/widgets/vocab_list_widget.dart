@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -86,7 +87,7 @@ class VocabListWidget extends StatelessWidget {
                             CircleAvatar(
                               backgroundColor: Colors.white,
                               radius: 12, // Image radius
-                              backgroundImage: imgAvatar != "" ? NetworkImage(imgAvatar) : const AssetImage("images/default-avatar.png") as ImageProvider,
+                              backgroundImage: imgAvatar != "" ? NetworkImage(imgAvatar) : const AssetImage(kIsWeb ? "images/default-avatar.png" : "assets/images/default-avatar.png") as ImageProvider,
                             ),
                             const SizedBox(
                               width: 8,
@@ -154,7 +155,7 @@ class VocabListWidget extends StatelessWidget {
                           CircleAvatar(
                             backgroundColor: Colors.white,
                             radius: 12,
-                            backgroundImage: imgAvatar != "" ? NetworkImage(imgAvatar) : const AssetImage("images/default-avatar.png") as ImageProvider,
+                            backgroundImage: imgAvatar != "" ? NetworkImage(imgAvatar) : const AssetImage(kIsWeb ? "images/default-avatar.png" : "assets/images/default-avatar.png") as ImageProvider,
                           ),
                           const SizedBox(
                             width: 8,

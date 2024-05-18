@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_final/src/services/folders_services.dart';
 import 'package:flutter_final/src/services/topics_services.dart';
@@ -148,7 +149,7 @@ class _HomeViewState extends State<HomeView> {
                                 SizedBox(
                                   width: 128,
                                   height: 128,
-                                  child: Image.asset("images/folder_empty.png"),
+                                  child: Image.asset(kIsWeb ? "images/folder_empty.png" : "assets/images/folder_empty.png"),
                                 ),
                                 const SizedBox(height: 12),
                                 const Text(
@@ -207,7 +208,7 @@ class _HomeViewState extends State<HomeView> {
                                 SizedBox(
                                   width: 128,
                                   height: 128,
-                                  child: Image.asset("images/topic_empty.png"),
+                                  child: Image.asset(kIsWeb ? "images/topic_empty.png" : "assets/images/topic_empty.png"),
                                 ),
                                 const SizedBox(height: 12),
                                 const Text(
