@@ -43,8 +43,12 @@ class _TestSetupState extends State<TestSetupView> {
 
     setState(() {
       _instantAnswer = prefs.getBool("settingInstantAnswer") ?? false;
-      _testType = TestType.values.firstWhere((e) => e.toString() == prefs.getString("settingTestType"));
-      _answerType = AnswerType.values.firstWhere((e) => e.toString() == prefs.getString("settingAnswerType"));
+      if (prefs.getString("settingTestType") != null) {
+        _testType = TestType.values.firstWhere((e) => e.toString() == prefs.getString("settingTestType"));
+      }
+      if (prefs.getString("settingAnswerType") != null) {
+        _answerType = AnswerType.values.firstWhere((e) => e.toString() == prefs.getString("settingAnswerType"));
+      }
     });
 
     setState(() {
