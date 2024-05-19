@@ -293,6 +293,7 @@ class _CommunitySearchState extends State<CommunitySearchView> with TickerProvid
                                   description: _topics[index]["description"],
                                   icon: const Icon(Icons.book),
                                   userName: _topics[index]["createdBy"]["username"] ?? "",
+                                  imgAvatar: _topics[index]["createdBy"]["avatarUrl"] ?? "",
                                   isDeletable: false,
                                 ),
                               );
