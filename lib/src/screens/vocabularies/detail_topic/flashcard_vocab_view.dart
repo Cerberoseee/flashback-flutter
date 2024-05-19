@@ -42,7 +42,7 @@ class _FlashcardVocabState extends State<FlashcardVocabView> {
   bool _isAuto = true, _isShuffleCards = false;
   int _currCard = 1;
   late double _flipDuration, _swipeDuration;
-  late AnswerType _cardOrientation;
+  late AnswerType _cardOrientation = AnswerType.definition;
   late FlipCardController _cardController;
   late Timer? timer;
   late SharedPreferences prefs;
