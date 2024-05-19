@@ -318,6 +318,7 @@ class _TestState extends State<TestView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: Text(
           "${min(_questionNum + 1, _vocabList.length)} / ${_vocabList.length}",
@@ -736,11 +737,12 @@ class _TestState extends State<TestView> {
                               ],
                             )
                           : Container(
+                              height: MediaQuery.of(context).viewInsets.bottom > 0? MediaQuery.of(context).viewInsets.bottom + 60 : 80,
                               padding: const EdgeInsets.all(12),
                               child: Stack(
                                 children: [
                                   SizedBox(
-                                    width: (MediaQuery.of(context).size.width * 0.65 - 24),
+                                    width: (MediaQuery.of(context).size.width * 0.65 - 30),
                                     child: TextField(
                                       autofocus: true,
                                       focusNode: focusNode,
