@@ -612,6 +612,8 @@ class _DetailFolderState extends State<DetailFolderView> {
                             description: _detailFolder["topics"][index]["description"],
                             icon: const Icon(Icons.book),
                             userName: _detailFolder["topics"][index]["createdBy"]["username"],
+                            imgAvatar: _detailFolder["topics"][index]["createdBy"]["avatarUrl"],
+
                           );
                         },
                       ),
