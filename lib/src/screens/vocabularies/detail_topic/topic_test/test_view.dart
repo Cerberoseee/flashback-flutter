@@ -737,7 +737,7 @@ class _TestState extends State<TestView> {
                               ],
                             )
                           : Container(
-                              height: MediaQuery.of(context).viewInsets.bottom > 0? MediaQuery.of(context).viewInsets.bottom + 60 : 80,
+                              height: MediaQuery.of(context).viewInsets.bottom > 0? MediaQuery.of(context).viewInsets.bottom*0.6 : 80,
                               padding: const EdgeInsets.all(12),
                               child: Stack(
                                 children: [
