@@ -124,14 +124,14 @@ Future<List<Map<String, dynamic>>> searchTopic(int limit, String term) async {
         .collection('topics')
         .where("topicNameQuery", isGreaterThanOrEqualTo: term.toLowerCase())
         .where("topicNameQuery", isLessThanOrEqualTo: "${term.toLowerCase()}\uf8ff")
-        .where("status", isEqualTo: "public")
+        // .where("status", isEqualTo: "public")
         .limit(limit)
         .get();
     QuerySnapshot topic2QuerySnapshot = await firestore
         .collection('topics')
         .where("descriptionQuery", isGreaterThanOrEqualTo: term.toLowerCase())
         .where("descriptionQuery", isLessThanOrEqualTo: "${term.toLowerCase()}\uf8ff")
-        .where("status", isEqualTo: "public")
+        // .where("status", isEqualTo: "public")
         .limit(limit)
         .get();
     QuerySnapshot userQuerySnapshot = await firestore.collection('users').get();

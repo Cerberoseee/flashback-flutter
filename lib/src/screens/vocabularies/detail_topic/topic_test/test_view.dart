@@ -615,15 +615,15 @@ class _TestState extends State<TestView> {
           : !_isFinished
               ? Container(
                   padding: const EdgeInsets.all(12),
+                  height: MediaQuery.of(context).size.width > 772 ? 300 : null,
                   child: widget.testType == TestType.multiple
                       ? SizedBox(
                           width: MediaQuery.of(context).size.width,
-                          height: 128,
                           child: GridView.builder(
                             shrinkWrap: true,
                             itemCount: _vocabList.length < 4 ? _vocabList.length : 4,
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: MediaQuery.of(context).size.width > 772 ? 2 : 1,
                               childAspectRatio: 6,
                               crossAxisSpacing: 12,
                               mainAxisSpacing: 12,

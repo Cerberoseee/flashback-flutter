@@ -162,14 +162,14 @@ Future<List<Map<String, dynamic>>> searchFolder(int limit, String term) async {
         .collection('folders')
         .where("folderNameQuery", isGreaterThanOrEqualTo: term.toLowerCase())
         .where("folderNameQuery", isLessThanOrEqualTo: "${term.toLowerCase()}\uf8ff")
-        .where("status", isEqualTo: "public")
+        // .where("status", isEqualTo: "public")
         .limit(limit)
         .get();
     QuerySnapshot folder2QuerySnapshot = await firestore
         .collection('folders')
         .where("descriptionQuery", isGreaterThanOrEqualTo: term.toLowerCase())
         .where("descriptionQuery", isLessThanOrEqualTo: "${term.toLowerCase()}\uf8ff")
-        .where("status", isEqualTo: "public")
+        // .where("status", isEqualTo: "public")
         .limit(limit)
         .get();
 
